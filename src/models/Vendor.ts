@@ -1,4 +1,5 @@
 import { Schema, models, model } from "mongoose";
+import type { VendorTier } from "@/lib/vendorTiers";
 
 export interface IVendor {
   uid: string; // Firebase uid
@@ -22,6 +23,12 @@ export interface IVendor {
     bankName: string;
   };
   verificationDocUrl?: string; // CAC doc or ID
+  tier?: VendorTier; // chosen at registration; copied to HubVendor.tier
+  tierRequest?: {
+    requestedTier: VendorTier;
+    status: "pending" | "approved" | "rejected";
+    requestedAt: Date;
+  };
   status: "pending" | "approved" | "rejected" | "suspended";
   isApproved: boolean; // manual approval switch, flipped to true by you
   isOpen: boolean; // manual open/close toggle
@@ -37,6 +44,19 @@ const BusinessHourSchema = new Schema(
     open: { type: String, default: "08:00" },
     close: { type: String, default: "20:00" },
     closed: { type: Boolean, default: false }
+  },
+  { _id: false }
+);
+
+const TierRequestSchema = new Schema(
+  {
+    requestedTier: { type: String, enum: ["basic", "regular", "premium"], required: true },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"
+    },
+    requestedAt: { type: Date, default: Date.now }
   },
   { _id: false }
 );
@@ -59,6 +79,8 @@ const VendorSchema = new Schema<IVendor>(
       bankName: { type: String }
     },
     verificationDocUrl: { type: String },
+    tier: { type: String, enum: ["basic", "regular", "premium"] },
+    tierRequest: { type: TierRequestSchema },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected", "suspended"],

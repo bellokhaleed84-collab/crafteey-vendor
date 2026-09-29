@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Crafteey Vendor",
   webDir: "cap-www",
   server: {
-    url: "https://YOUR-VENDOR-APP-URL", // replace with your deployed vendor URL
+    url: "https://crafteey-vendor.vercel.app",
     cleartext: false,
   },
   plugins: {
@@ -13,4 +13,4 @@ const config: CapacitorConfig = {
   },
 };
 
-export default config;
+export default config;;

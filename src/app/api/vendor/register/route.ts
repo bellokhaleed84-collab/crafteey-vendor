@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import Vendor from "@/models/Vendor";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { VENDOR_CATEGORIES } from "@/lib/vendorCategories";
+import { isVendorTier } from "@/lib/vendorTiers";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,17 +37,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid phone number" }, { status: 400 });
     }
 
-    let verificationDocUrl: string | undefined;
-    if (body.verificationDocUrl) {
+    // Only the three known tier names are accepted.
+    const tier = body.tier;
+    if (!isVendorTier(tier)) {
+      return NextResponse.json({ error: "Choose a valid plan." }, { status: 400 });
+    }
+
+    // Optional store logo: must be an https Cloudinary link (what our
+    // signed upload returns), so arbitrary URLs can't end up in the Hub.
+    let logoUrl: string | undefined;
+    if (body.logoUrl) {
       try {
-        const parsed = new URL(String(body.verificationDocUrl).trim());
-        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-          throw new Error("bad protocol");
+        const parsed = new URL(String(body.logoUrl).trim());
+        if (parsed.protocol !== "https:" || parsed.hostname !== "res.cloudinary.com") {
+          throw new Error("bad logo url");
         }
-        verificationDocUrl = parsed.toString();
+        logoUrl = parsed.toString();
       } catch {
         return NextResponse.json(
-          { error: "The verification document link must be a valid web address starting with https://" },
+          { error: "The store logo must be an image uploaded through the app." },
           { status: 400 }
         );
       }
@@ -67,7 +76,8 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       address,
-      verificationDocUrl,
+      logoUrl,
+      tier,
       status: "pending",
       isApproved: false,
       isOpen: false,

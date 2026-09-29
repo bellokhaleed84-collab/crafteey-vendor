@@ -2,6 +2,7 @@ import HubVendor from "@/models/HubVendor";
 import Vendor from "@/models/Vendor";
 import type { HubCategory } from "@/lib/hub/config";
 import { isVendorApproved } from "@/lib/vendorApproval";
+import { isVendorTier } from "@/lib/vendorTiers";
 
 const CATEGORY_MAP: Record<string, HubCategory> = {
   Restaurant: "food",
@@ -29,10 +30,13 @@ export async function getLinkedHubVendor(uid: string) {
       name: vendor.businessName,
       categories: [CATEGORY_MAP[vendor.category] ?? "marketplace"],
       address: vendor.address || undefined,
+      logoUrl: vendor.logoUrl || undefined,
       isOpen: Boolean(vendor.isOpen),
       isActive: true,
       isSeed: false,
-      tier: "basic",
+      // The tier the vendor picked at registration. Vendors created before
+      // tier selection existed have none, so they fall back to "basic".
+      tier: isVendorTier(vendor.tier) ? vendor.tier : "basic",
     });
   } catch {
     // Duplicate key: another request created it at the same moment.

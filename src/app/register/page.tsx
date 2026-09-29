@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { VENDOR_CATEGORIES } from "@/lib/vendorCategories";
 import { friendlyAuthError } from "@/lib/authErrors";
+import { VENDOR_TIERS, isVendorTier, type VendorTier } from "@/lib/vendorTiers";
+import TierCard from "@/components/TierCard";
 
 type FormState = {
   businessName: string;
@@ -14,10 +16,15 @@ type FormState = {
   phone: string;
   category: string;
   address: string;
-  verificationDocUrl: string;
+  tier: VendorTier;
 };
 
 const REQUEST_TIMEOUT_MS = 20000;
+const UPLOAD_TIMEOUT_MS = 30000;
+const MAX_LOGO_MB = 5;
+const TOTAL_STEPS = 4;
+const LOGO_ERROR =
+  "We couldn't upload your logo. Try again, or remove it and submit without one.";
 
 function validateStep(step: number, form: FormState): string | null {
   if (step === 1) {
@@ -31,20 +38,57 @@ function validateStep(step: number, form: FormState): string | null {
     }
     if (form.address.trim().length < 5) return "Enter your full store address.";
   }
-  if (step === 3 && form.verificationDocUrl.trim()) {
-    try {
-      const parsed = new URL(form.verificationDocUrl.trim());
-      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-        throw new Error("bad protocol");
-      }
-    } catch {
-      return "Enter a valid link starting with https://";
-    }
+  if (step === 3) {
+    if (!isVendorTier(form.tier)) return "Choose a plan.";
   }
   return null;
 }
 
-const STEP_LABELS = ["Business", "Details", "Verify"];
+// Uploads the logo to Cloudinary using a signed request. Must be called AFTER
+// the Firebase account exists, because /api/upload/sign requires a token.
+async function uploadLogo(
+  token: string | null | undefined,
+  file: File
+): Promise<string> {
+  if (!token) throw new Error("Your session expired. Please try again.");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+  try {
+    const signRes = await fetch("/api/upload/sign", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ kind: "logo" }),
+    });
+    if (!signRes.ok) throw new Error("sign failed");
+    const { cloudName, apiKey, timestamp, signature, folder } = await signRes.json();
+
+    const data = new FormData();
+    data.append("file", file);
+    data.append("api_key", apiKey);
+    data.append("timestamp", String(timestamp));
+    data.append("signature", signature);
+    data.append("folder", folder);
+
+    const up = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      signal: controller.signal,
+      body: data,
+    });
+    const json = await up.json();
+    if (!up.ok || !json.secure_url) throw new Error("upload failed");
+    return json.secure_url as string;
+  } catch {
+    throw new Error(LOGO_ERROR);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const STEP_LABELS = ["Business", "Details", "Plan", "Logo"];
 
 export default function RegisterPage() {
   const { signUp, getToken } = useAuth();
@@ -52,6 +96,9 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormState>({
     businessName: "",
     email: "",
@@ -59,11 +106,38 @@ export default function RegisterPage() {
     phone: "",
     category: VENDOR_CATEGORIES[0],
     address: "",
-    verificationDocUrl: "",
+    tier: "regular",
   });
+
+  // Free the preview's object URL when it changes or the page unmounts.
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+    };
+  }, [logoPreview]);
 
   const update = (key: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const pickLogo = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file (JPG or PNG).");
+      return;
+    }
+    if (file.size > MAX_LOGO_MB * 1024 * 1024) {
+      setError(`Logo must be under ${MAX_LOGO_MB}MB.`);
+      return;
+    }
+    setError(null);
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
 
   const next = () => {
     const message = validateStep(step, form);
@@ -72,7 +146,7 @@ export default function RegisterPage() {
       return;
     }
     setError(null);
-    setStep((s) => Math.min(s + 1, 3));
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   };
 
   const back = () => {
@@ -98,9 +172,16 @@ export default function RegisterPage() {
       // 1. Create the Firebase auth account
       createdUser = await signUp(form.email.trim(), form.password);
 
-      // 2. Create the vendor profile in MongoDB (gives up after 20s instead
-      // of hanging forever)
       const token = await getToken();
+
+      // 2. Upload the logo (needs the token, so it can only happen now)
+      let logoUrl: string | undefined;
+      if (logoFile) {
+        logoUrl = await uploadLogo(token, logoFile);
+      }
+
+      // 3. Create the vendor profile in MongoDB (gives up after 20s instead
+      // of hanging forever)
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       let res: Response;
@@ -117,7 +198,8 @@ export default function RegisterPage() {
             category: form.category,
             phone: form.phone,
             address: form.address.trim(),
-            verificationDocUrl: form.verificationDocUrl.trim() || undefined,
+            tier: form.tier,
+            logoUrl,
           }),
         });
       } finally {
@@ -257,27 +339,104 @@ export default function RegisterPage() {
 
         {step === 3 && (
           <div className="mt-6 space-y-4">
-            <h2 className="text-lg font-bold text-ink">Verification</h2>
+            <h2 className="text-lg font-bold text-ink">Choose your plan</h2>
             <p className="text-sm text-ink-muted">
-              Upload your CAC document or a valid ID. This is used by our
-              team to approve your store — you&apos;ll be notified once
-              approved.
+              The commission is taken from each order&apos;s item total. You can
+              ask to change your plan later from Settings.
             </p>
-            {/* TODO: wire this input to a signed Cloudinary upload, same
-                pattern as crafteey-client's photo/video upload, then set
-                form.verificationDocUrl to the returned secure_url */}
-            <Field label="Verification document URL (temporary manual field)">
-              <input
-                className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
-                placeholder="https://..."
-                value={form.verificationDocUrl}
-                onChange={(e) => update("verificationDocUrl", e.target.value)}
-              />
-            </Field>
+            <div className="space-y-3">
+              {VENDOR_TIERS.map((t) => (
+                <TierCard
+                  key={t}
+                  tier={t}
+                  selected={form.tier === t}
+                  onSelect={() => setForm((prev) => ({ ...prev, tier: t }))}
+                />
+              ))}
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={back}
                 className="flex-1 rounded-xl border border-surface-border py-3 font-semibold text-ink"
+              >
+                Back
+              </button>
+              <button
+                onClick={next}
+                className="flex-1 rounded-xl bg-brand py-3 font-semibold text-brand-ink"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="mt-6 space-y-4">
+            <h2 className="text-lg font-bold text-ink">Store logo</h2>
+            <p className="text-sm text-ink-muted">
+              Add your business logo. It will show on your store in the Crafteey
+              Hub. Our team reviews your store before it goes live.
+            </p>
+
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) pickLogo(f);
+              }}
+            />
+
+            <div className="flex flex-col items-center gap-3">
+              {logoPreview ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logoPreview}
+                    alt="Your store logo"
+                    className="h-32 w-32 rounded-2xl border border-surface-border bg-surface object-contain"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={submitting}
+                      className="rounded-full border border-surface-border px-4 py-1.5 text-xs font-medium text-ink"
+                    >
+                      Change
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      disabled={submitting}
+                      className="rounded-full border border-surface-border px-4 py-1.5 text-xs font-medium text-status-danger"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="flex h-32 w-32 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-border bg-surface text-sm text-ink-muted"
+                >
+                  Tap to add logo
+                  <span className="mt-1 text-xs text-ink-faint">
+                    JPG or PNG, up to {MAX_LOGO_MB}MB
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={back}
+                disabled={submitting}
+                className="flex-1 rounded-xl border border-surface-border py-3 font-semibold text-ink disabled:opacity-60"
               >
                 Back
               </button>

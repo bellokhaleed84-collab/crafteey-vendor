@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Store, MapPin, Clock, Navigation, FileText, Power, ChevronRight } from "lucide-react";
+import {
+  Store,
+  MapPin,
+  Clock,
+  Navigation,
+  FileText,
+  Power,
+  ChevronRight,
+  Award,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { isVendorApproved } from "@/lib/vendorApproval";
@@ -106,6 +115,12 @@ export default function SettingsPage() {
           icon={MapPin}
           label="Location & Map"
           hint="Pin your pickup coordinates"
+        />
+        <SettingsRow
+          href="/dashboard/settings/tier"
+          icon={Award}
+          label="Store Tier"
+          hint="Commission and Hub visibility"
         />
         <ComingSoonRow icon={Clock} label="Opening Hours" hint="Set your daily schedule" />
         <ComingSoonRow icon={Navigation} label="Pickup Instructions" hint="Notes for riders" />
