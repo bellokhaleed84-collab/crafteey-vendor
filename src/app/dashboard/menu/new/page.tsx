@@ -6,6 +6,7 @@ import { ChevronLeft, Plus, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
+import ImageUpload from "@/components/ImageUpload";
 
 interface VariantOption {
   label: string;
@@ -29,6 +30,7 @@ export default function AddProductPage() {
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const update = (key: keyof typeof form, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -62,6 +64,8 @@ export default function AddProductPage() {
     );
 
   const handleSave = async () => {
+    if (uploading) return setError("Please wait for the photo to finish uploading.");
+
     const price = Number(form.price);
     if (!form.name.trim()) return setError("Enter a product name.");
     if (!form.category.trim()) return setError("Enter a category.");
@@ -83,7 +87,7 @@ export default function AddProductPage() {
           description: form.description.trim(),
           category: form.category.trim(),
           price,
-          imageUrl: form.imageUrl.trim() || undefined,
+          imageUrl: form.imageUrl || undefined,
           variants: variants.map((v) => ({
             name: v.name.trim(),
             options: v.options.map((o) => ({
@@ -124,14 +128,12 @@ export default function AddProductPage() {
         />
       </Field>
 
-      <Field label="Image URL">
-        <input
-          placeholder="https://..."
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
+      <Field label="Product Photo">
+        <ImageUpload
           value={form.imageUrl}
-          onChange={(e) => update("imageUrl", e.target.value)}
+          onChange={(url) => update("imageUrl", url)}
+          onUploadingChange={setUploading}
         />
-        <p className="mt-1 text-xs text-ink-faint">Paste an image link for now — direct upload isn&apos;t wired up yet.</p>
       </Field>
 
       <Field label="Description">
@@ -244,10 +246,10 @@ export default function AddProductPage() {
 
       <button
         onClick={handleSave}
-        disabled={saving}
+        disabled={saving || uploading}
         className="w-full rounded-xl bg-brand py-3 font-semibold text-brand-ink disabled:opacity-60"
       >
-        {saving ? "Saving..." : "Save Product"}
+        {uploading ? "Uploading photo..." : saving ? "Saving..." : "Save Product"}
       </button>
     </div>
   );
