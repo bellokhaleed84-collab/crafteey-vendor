@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
+import { ORDERS_REFRESH_EVENT } from "@/components/PushRegistrar";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -68,7 +69,12 @@ export default function OrdersPage() {
   useEffect(() => {
     load();
     const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
+    // A push arrived while the app is open: refresh immediately
+    window.addEventListener(ORDERS_REFRESH_EVENT, load);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener(ORDERS_REFRESH_EVENT, load);
+    };
   }, [load]);
 
   const count = (stage: Order["stage"]) => orders.filter((o) => o.stage === stage).length;

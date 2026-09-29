@@ -10,6 +10,10 @@
     "seed:vendor": "node scripts/seed-vendor.js"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@capacitor/splash-screen": "^8.0.2",
     "cloudinary": "^2.11.0",
     "firebase": "^10.12.2",
     "firebase-admin": "^12.1.1",
@@ -21,6 +25,9 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
