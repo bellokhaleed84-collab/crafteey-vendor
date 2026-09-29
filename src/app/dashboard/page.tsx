@@ -6,7 +6,7 @@ import { Bell, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
-import { Skeleton, SkeletonStatCard, SkeletonText } from "@/components/ui/Skeleton";
+import { Skeleton, SkeletonStatCard } from "@/components/ui/Skeleton";
 
 interface VendorSummary {
   businessName: string;
@@ -16,12 +16,11 @@ interface VendorSummary {
 }
 
 interface OrderSummary {
-  status: string;
-  total: number;
-  createdAt: string;
+  stage: string;
+  subtotal: number;
+  vendorPayout: number;
+  placedAt: string;
 }
-
-const COMMISSION_RATE = 0.15; // TODO: replace with the vendor's real tier rate
 
 const STATUS_STYLES: Record<VendorSummary["status"], { label: string; bg: string; text: string }> = {
   pending: { label: "Pending review", bg: "bg-status-warning-bg", text: "text-status-warning" },
@@ -87,20 +86,19 @@ export default function DashboardOverviewPage() {
   }
 
   const today = new Date();
-  const todaysOrders = orders.filter((o) => isSameDay(o.createdAt, today));
-  const todaysSales = todaysOrders
-    .filter((o) => o.status === "delivered")
-    .reduce((sum, o) => sum + o.total, 0);
+  const todaysSales = orders
+    .filter((o) => o.stage === "delivered" && isSameDay(o.placedAt, today))
+    .reduce((sum, o) => sum + o.subtotal, 0);
 
-  const newCount = orders.filter((o) => o.status === "pending").length;
-  const preparingCount = orders.filter((o) => o.status === "preparing").length;
-  const readyCount = orders.filter((o) => o.status === "ready_for_pickup").length;
-  const completedCount = orders.filter((o) => o.status === "delivered").length;
+  const newCount = orders.filter((o) => o.stage === "new").length;
+  const preparingCount = orders.filter((o) => o.stage === "preparing").length;
+  const readyCount = orders.filter((o) => o.stage === "ready").length;
+  const completedCount = orders.filter((o) => o.stage === "delivered").length;
 
-  const deliveredTotal = orders
-    .filter((o) => o.status === "delivered")
-    .reduce((sum, o) => sum + o.total, 0);
-  const estBalance = deliveredTotal * (1 - COMMISSION_RATE);
+  const delivered = orders.filter((o) => o.stage === "delivered");
+  const deliveredTotal = delivered.reduce((sum, o) => sum + o.subtotal, 0);
+  // Real payout per order (tier-based, computed when the order was created)
+  const estBalance = delivered.reduce((sum, o) => sum + o.vendorPayout, 0);
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today);
@@ -109,9 +107,9 @@ export default function DashboardOverviewPage() {
   });
   const trend = days.map((d) => ({
     label: d.toLocaleDateString(undefined, { weekday: "short" }),
-    value: orders
-      .filter((o) => o.status === "delivered" && isSameDay(o.createdAt, d))
-      .reduce((sum, o) => sum + o.total, 0),
+    value: delivered
+      .filter((o) => isSameDay(o.placedAt, d))
+      .reduce((sum, o) => sum + o.subtotal, 0),
   }));
   const maxTrend = Math.max(...trend.map((t) => t.value), 1);
 
@@ -230,18 +228,21 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
   );
 }
 
-function StatusPill({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number;
-  accent: "new" | "preparing" | "ready" | "delivered";
-}) {
+type Accent = "new" | "preparing" | "ready" | "delivered";
+
+// Full class names (not built with template strings) so Tailwind always generates them.
+const PILL_STYLES: Record<Accent, { box: string; value: string }> = {
+  new: { box: "bg-status-new-bg", value: "text-status-new" },
+  preparing: { box: "bg-status-preparing-bg", value: "text-status-preparing" },
+  ready: { box: "bg-status-ready-bg", value: "text-status-ready" },
+  delivered: { box: "bg-status-delivered-bg", value: "text-status-delivered" },
+};
+
+function StatusPill({ label, value, accent }: { label: string; value: number; accent: Accent }) {
+  const s = PILL_STYLES[accent];
   return (
-    <div className={`rounded-xl bg-status-${accent}-bg p-2.5 text-center`}>
-      <p className={`text-base font-bold text-status-${accent}`}>{value}</p>
+    <div className={`rounded-xl p-2.5 text-center ${s.box}`}>
+      <p className={`text-base font-bold ${s.value}`}>{value}</p>
       <p className="mt-0.5 text-[10px] font-medium text-ink-muted">{label}</p>
     </div>
   );

@@ -9,53 +9,52 @@ import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-interface OrderItem {
-  name: string;
-  quantity: number;
-  unitPrice: number;
-}
+type Stage = "new" | "preparing" | "ready" | "picked_up" | "delivered" | "cancelled";
 
 interface Order {
   _id: string;
-  customerName: string;
-  customerPhone: string;
-  deliveryAddress: string;
-  items: OrderItem[];
+  orderNumber: string;
+  stage: Stage;
+  items: { name: string; quantity: number; unitPrice: number }[];
   subtotal: number;
-  deliveryFee: number;
-  total: number;
-  note?: string;
-  status: string;
+  vendorPayout: number;
+  placedAt: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "New",
-  accepted: "Accepted",
+const STAGE_LABELS: Record<Stage, string> = {
+  new: "New",
   preparing: "Preparing",
-  ready_for_pickup: "Ready for pickup",
+  ready: "Ready for pickup",
   picked_up: "Picked up",
   delivered: "Delivered",
-  rejected: "Rejected",
   cancelled: "Cancelled",
 };
 
-const NEXT_ACTIONS: Record<string, { label: string; status: string }[]> = {
-  pending: [
-    { label: "Accept order", status: "accepted" },
-    { label: "Reject order", status: "rejected" },
-  ],
-  accepted: [{ label: "Start preparing", status: "preparing" }],
-  preparing: [{ label: "Mark ready for pickup", status: "ready_for_pickup" }],
+const STAGE_BADGE: Record<Stage, string> = {
+  new: "bg-status-new-bg text-status-new",
+  preparing: "bg-status-preparing-bg text-status-preparing",
+  ready: "bg-status-ready-bg text-status-ready",
+  picked_up: "bg-status-ready-bg text-status-ready",
+  delivered: "bg-status-delivered-bg text-status-delivered",
+  cancelled: "bg-status-cancelled-bg text-status-cancelled",
 };
 
-// Visual progress trail. Only shown when the order hasn't been
-// rejected/cancelled, since those are dead-end states, not a step on the
-// normal path.
-const TRAIL = [
-  { status: "pending", label: "Order placed" },
-  { status: "preparing", label: "Preparing" },
-  { status: "ready_for_pickup", label: "Ready for pickup" },
-  { status: "delivered", label: "Delivered" },
+type Action = "accept" | "ready" | "reject";
+
+const ACTIONS: Partial<Record<Stage, { label: string; action: Action }[]>> = {
+  new: [
+    { label: "Accept order", action: "accept" },
+    { label: "Reject order", action: "reject" },
+  ],
+  preparing: [{ label: "Mark ready for pickup", action: "ready" }],
+};
+
+const TRAIL: { stage: Stage; label: string }[] = [
+  { stage: "new", label: "Order received" },
+  { stage: "preparing", label: "Preparing" },
+  { stage: "ready", label: "Ready for pickup" },
+  { stage: "picked_up", label: "Picked up by rider" },
+  { stage: "delivered", label: "Delivered" },
 ];
 
 const POLL_MS = 15000;
@@ -71,11 +70,15 @@ export default function OrderDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch(getToken, "/api/orders");
+      const res = await apiFetch(getToken, `/api/orders/${id}`);
+      if (res.status === 404) {
+        setOrder(null);
+        setLoadError(null);
+        return;
+      }
       if (!res.ok) throw new Error(await readError(res, "Couldn't load this order."));
       const data = await res.json();
-      const found = ((data.orders ?? []) as Order[]).find((o) => o._id === id);
-      setOrder(found ?? null);
+      setOrder(data.order);
       setLoadError(null);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Couldn't load this order.");
@@ -90,21 +93,21 @@ export default function OrderDetailPage() {
     return () => clearInterval(timer);
   }, [load]);
 
-  const updateStatus = async (status: string) => {
-    if (status === "rejected" && !confirm("Reject this order? This can't be undone.")) {
-      return;
-    }
+  const runAction = async (action: Action) => {
+    if (action === "reject" && !confirm("Reject this order? This can't be undone.")) return;
     setUpdating(true);
     setActionError(null);
     try {
       const res = await apiFetch(getToken, `/api/orders/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ action }),
       });
       if (!res.ok) throw new Error(await readError(res, "Couldn't update this order."));
-      await load();
+      const data = await res.json();
+      setOrder(data.order);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Couldn't update this order.");
+      await load();
     } finally {
       setUpdating(false);
     }
@@ -123,9 +126,7 @@ export default function OrderDetailPage() {
       <div className="max-w-lg space-y-4">
         {back}
         {loadError ? (
-          <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
-            {loadError}
-          </p>
+          <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{loadError}</p>
         ) : (
           <p className="text-sm text-ink-muted">Order not found.</p>
         )}
@@ -133,43 +134,48 @@ export default function OrderDetailPage() {
     );
   }
 
-  const actions = NEXT_ACTIONS[order.status] || [];
-  const isDeadEnd = order.status === "rejected" || order.status === "cancelled";
-  const trailIndex = TRAIL.findIndex((t) => t.status === order.status);
+  const actions = ACTIONS[order.stage] ?? [];
+  const cancelled = order.stage === "cancelled";
+  const trailIndex = TRAIL.findIndex((t) => t.stage === order.stage);
 
   return (
     <div className="max-w-lg space-y-5">
       {back}
 
       {loadError && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
-          {loadError}
-        </p>
+        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{loadError}</p>
       )}
 
       <Card className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-ink">{order.customerName}</h1>
-            <p className="text-sm text-ink-muted">{order.deliveryAddress}</p>
-            <a href={`tel:${order.customerPhone}`} className="text-sm text-brand-dark">
-              {order.customerPhone}
-            </a>
+            <h1 className="text-lg font-bold text-ink">{order.orderNumber}</h1>
+            <p className="text-sm text-ink-muted">
+              Placed{" "}
+              {new Date(order.placedAt).toLocaleString(undefined, {
+                day: "numeric",
+                month: "short",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
           </div>
-          <span className="shrink-0 rounded-full bg-status-new-bg px-2.5 py-1 text-xs font-semibold text-status-new">
-            {STATUS_LABELS[order.status] || order.status}
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STAGE_BADGE[order.stage]}`}>
+            {STAGE_LABELS[order.stage]}
           </span>
         </div>
       </Card>
 
-      {!isDeadEnd && (
+      {cancelled ? (
+        <Card className="bg-surface-muted p-3 text-sm text-ink-muted">This order was cancelled.</Card>
+      ) : (
         <Card className="p-4">
           <ol className="space-y-3">
             {TRAIL.map((step, i) => {
-              const done = i < trailIndex;
-              const current = i === trailIndex;
+              const done = i < trailIndex || order.stage === "delivered";
+              const current = i === trailIndex && order.stage !== "delivered";
               return (
-                <li key={step.status} className="flex items-center gap-3">
+                <li key={step.stage} className="flex items-center gap-3">
                   <span
                     className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                       done
@@ -184,9 +190,7 @@ export default function OrderDetailPage() {
                   <span className={`text-sm ${current ? "font-semibold text-ink" : "text-ink-muted"}`}>
                     {step.label}
                   </span>
-                  {!done && !current && (
-                    <span className="ml-auto text-xs text-ink-faint">Pending</span>
-                  )}
+                  {!done && !current && <span className="ml-auto text-xs text-ink-faint">Pending</span>}
                 </li>
               );
             })}
@@ -204,37 +208,30 @@ export default function OrderDetailPage() {
           </div>
         ))}
         <div className="flex justify-between p-3 text-sm text-ink-muted">
-          <span>Delivery fee</span>
-          <span>₦{order.deliveryFee.toLocaleString()}</span>
+          <span>Items subtotal</span>
+          <span>₦{order.subtotal.toLocaleString()}</span>
         </div>
-        <div className="flex justify-between p-3 font-semibold text-ink">
-          <span>Total</span>
-          <span>₦{order.total.toLocaleString()}</span>
-        </div>
+        {!cancelled && (
+          <div className="flex justify-between p-3 font-semibold text-ink">
+            <span>Your payout</span>
+            <span>₦{order.vendorPayout.toLocaleString()}</span>
+          </div>
+        )}
       </Card>
 
-      {order.note && (
-        <Card className="bg-surface-muted p-3 text-sm text-ink">
-          <span className="font-medium">Note: </span>
-          {order.note}
-        </Card>
-      )}
-
       {actionError && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
-          {actionError}
-        </p>
+        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{actionError}</p>
       )}
 
       {actions.length > 0 && (
         <div className="flex gap-3">
           {actions.map((a) => (
             <button
-              key={a.status}
-              onClick={() => updateStatus(a.status)}
+              key={a.action}
+              onClick={() => runAction(a.action)}
               disabled={updating}
               className={`flex-1 rounded-xl py-3 font-semibold transition disabled:opacity-60 ${
-                a.status === "rejected"
+                a.action === "reject"
                   ? "border border-status-danger text-status-danger"
                   : "bg-brand text-brand-ink"
               }`}
@@ -245,7 +242,7 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {order.status === "ready_for_pickup" && (
+      {order.stage === "ready" && (
         <Card className="bg-surface-muted p-3 text-sm text-ink-muted">
           Waiting for the rider to collect this order.
         </Card>
@@ -261,7 +258,6 @@ function OrderDetailSkeleton({ back }: { back: React.ReactNode }) {
       <Card className="p-4">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="mt-2 h-3.5 w-56" />
-        <Skeleton className="mt-2 h-3.5 w-32" />
       </Card>
       <Card className="space-y-3 p-4">
         <Skeleton className="h-4 w-full" />
