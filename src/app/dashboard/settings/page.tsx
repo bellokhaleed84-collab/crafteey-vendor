@@ -101,7 +101,12 @@ export default function SettingsPage() {
           label="Store Information"
           hint="Name, phone, category, description"
         />
-        <ComingSoonRow icon={MapPin} label="Location & Map" hint="Pin your pickup coordinates" />
+        <SettingsRow
+          href="/dashboard/settings/location"
+          icon={MapPin}
+          label="Location & Map"
+          hint="Pin your pickup coordinates"
+        />
         <ComingSoonRow icon={Clock} label="Opening Hours" hint="Set your daily schedule" />
         <ComingSoonRow icon={Navigation} label="Pickup Instructions" hint="Notes for riders" />
         <ComingSoonRow icon={FileText} label="Business Documents" hint="CAC, ID and verification" />
