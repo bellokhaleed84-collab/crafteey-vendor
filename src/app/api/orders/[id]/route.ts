@@ -5,6 +5,7 @@ import HubOrder from "@/models/HubOrder";
 import HubVendor from "@/models/HubVendor";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { orderStage, toVendorOrder } from "@/lib/hubOrderMapper";
+import { rejectOrder } from "@/lib/hub/rejectOrder";
 
 type Ctx = { params: { id: string } };
 
@@ -45,6 +46,44 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const order = await HubOrder.findOne({ _id: params.id, vendorId: vendor._id });
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
+    // Reject is a transaction (cancel + wallet refund + cancel rider job),
+    // so it has its own path.
+    if (action === "reject") {
+      // A second tap on an already-refunded order changes nothing.
+      if (order.refund?.status === "refunded") {
+        return NextResponse.json({
+          order: toVendorOrder(order.toObject() as unknown as Parameters<typeof toVendorOrder>[0]),
+        });
+      }
+
+      const stage = orderStage(order);
+      if (stage !== "new") {
+        return NextResponse.json({ error: "This order can't be rejected now." }, { status: 409 });
+      }
+      if (order.status !== "paid") {
+        return NextResponse.json(
+          { error: "A rider has already accepted this order, so it can't be rejected here. Contact support." },
+          { status: 409 }
+        );
+      }
+
+      const result = await rejectOrder({
+        orderId: params.id,
+        vendorId: vendor._id,
+        reason: typeof reason === "string" ? reason : undefined,
+      });
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+
+      const fresh = await HubOrder.findById(order._id).lean();
+      if (!fresh) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json({
+        order: toVendorOrder(fresh as unknown as Parameters<typeof toVendorOrder>[0]),
+        refundedKobo: result.refundedKobo,
+      });
+    }
+
     const stage = orderStage(order);
     const now = new Date();
     // Guard against races (e.g. the rider updating status at the same moment).
@@ -67,27 +106,6 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       updated = await HubOrder.findOneAndUpdate(
         { ...base, vendorAcceptedAt: { $exists: true }, readyForPickupAt: { $exists: false } },
         { $set: { readyForPickupAt: now } },
-        { new: true }
-      );
-    } else if (action === "reject") {
-      if (stage !== "new") {
-        return NextResponse.json({ error: "This order can't be rejected now." }, { status: 409 });
-      }
-      if (order.status !== "paid") {
-        return NextResponse.json(
-          { error: "A rider has already accepted this order, so it can't be rejected here. Contact support." },
-          { status: 409 }
-        );
-      }
-      updated = await HubOrder.findOneAndUpdate(
-        { ...base, vendorAcceptedAt: { $exists: false } },
-        {
-          $set: {
-            status: "cancelled",
-            cancelledBy: "vendor",
-            cancelReason: typeof reason === "string" ? reason.slice(0, 200) : undefined,
-          },
-        },
         { new: true }
       );
     } else {

@@ -1,8 +1,8 @@
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 import { HUB_ORDER_STATUSES, type HubOrderStatus } from "@/lib/hub/config";
 
-// Mirrors crafteey-client's HubOrder (same "HubOrder" collection), plus three
-// optional vendor-progress fields written only by this app.
+// Mirrors crafteey-client's HubOrder (same "HubOrder" collection), plus the
+// optional vendor-progress and refund fields.
 export interface IHubOrder {
   _id: Types.ObjectId;
   clientId: Types.ObjectId;
@@ -29,6 +29,8 @@ export interface IHubOrder {
   readyForPickupAt?: Date;
   cancelledBy?: "vendor";
   cancelReason?: string;
+  // Set when a cancelled, paid order has been refunded to the customer's wallet.
+  refund?: { status: "refunded"; method: "wallet"; amountKobo: number; refundedAt: Date };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +79,12 @@ const HubOrderSchema = new Schema<IHubOrder>(
     readyForPickupAt: Date,
     cancelledBy: { type: String, enum: ["vendor"] },
     cancelReason: String,
+    refund: {
+      status: { type: String, enum: ["refunded"] },
+      method: { type: String, enum: ["wallet"] },
+      amountKobo: Number,
+      refundedAt: Date,
+    },
   },
   { timestamps: true }
 );
