@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,14 +23,33 @@ export default function AddProductPage() {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    category: "",
+    section: "",
     price: "",
     imageUrl: "",
   });
   const [variants, setVariants] = useState<VariantDraft[]>([]);
+  const [sections, setSections] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Suggest the vendor's existing sections so names stay consistent.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch(getToken, "/api/products");
+        if (!res.ok) return;
+        const data = await res.json();
+        const found = new Set<string>();
+        for (const p of (data.products ?? []) as { section?: string }[]) {
+          if (p.section) found.add(p.section);
+        }
+        setSections([...found].sort());
+      } catch {
+        // Suggestions are optional; ignore failures.
+      }
+    })();
+  }, [getToken]);
 
   const update = (key: keyof typeof form, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -68,9 +87,11 @@ export default function AddProductPage() {
 
     const price = Number(form.price);
     if (!form.name.trim()) return setError("Enter a product name.");
-    if (!form.category.trim()) return setError("Enter a category.");
     if (!form.price || !Number.isFinite(price) || price <= 0) {
       return setError("Enter a price above ₦0.");
+    }
+    if (form.section.trim().length > 40) {
+      return setError("Menu section must be 40 characters or fewer.");
     }
     for (const v of variants) {
       if (!v.name.trim()) return setError("Every variant needs a name (e.g. Size).");
@@ -85,7 +106,7 @@ export default function AddProductPage() {
         body: JSON.stringify({
           name: form.name.trim(),
           description: form.description.trim(),
-          category: form.category.trim(),
+          section: form.section.trim() || undefined,
           price,
           imageUrl: form.imageUrl || undefined,
           variants: variants.map((v) => ({
@@ -146,13 +167,23 @@ export default function AddProductPage() {
         />
       </Field>
 
-      <Field label="Category" required>
+      <Field label="Menu section">
         <input
-          placeholder="e.g. Main Dishes"
+          list="menu-sections"
+          maxLength={40}
+          placeholder="e.g. Rice Dishes"
           className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
-          value={form.category}
-          onChange={(e) => update("category", e.target.value)}
+          value={form.section}
+          onChange={(e) => update("section", e.target.value)}
         />
+        <datalist id="menu-sections">
+          {sections.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+        <p className="mt-1 text-xs text-ink-faint">
+          Optional. Groups items on your store menu in the Hub, like Rice Dishes or Drinks.
+        </p>
       </Field>
 
       <Field label="Price (₦)" required>

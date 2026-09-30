@@ -31,6 +31,7 @@ export async function getLinkedHubVendor(uid: string) {
       categories: [CATEGORY_MAP[vendor.category] ?? "marketplace"],
       address: vendor.address || undefined,
       logoUrl: vendor.logoUrl || undefined,
+      tagline: vendor.tagline || undefined,
       isOpen: Boolean(vendor.isOpen),
       isActive: true,
       isSeed: false,

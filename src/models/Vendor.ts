@@ -11,6 +11,7 @@ export interface IVendor {
   logoUrl?: string;
   coverImageUrl?: string;
   description?: string;
+  tagline?: string; // short line shown under the store name in the Hub
   businessHours?: {
     day: string; // "Monday"
     open: string; // "08:00"
@@ -72,6 +73,7 @@ const VendorSchema = new Schema<IVendor>(
     logoUrl: { type: String },
     coverImageUrl: { type: String },
     description: { type: String },
+    tagline: { type: String, maxlength: 80 },
     businessHours: { type: [BusinessHourSchema], default: [] },
     bankDetails: {
       accountName: { type: String },

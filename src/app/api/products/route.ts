@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import HubProduct from "@/models/HubProduct";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { getLinkedHubVendor } from "@/lib/hubVendor";
-import { toVendorProduct, resolveCategory, nairaToKobo } from "@/lib/hubProductMapper";
+import { toVendorProduct, nairaToKobo, parseSection } from "@/lib/hubProductMapper";
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,15 +39,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const priceKobo = nairaToKobo(body.price);
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
     if (priceKobo === null) return NextResponse.json({ error: "Enter a valid price" }, { status: 400 });
 
+    const section = parseSection(body.section);
+    if (!section.ok) return NextResponse.json({ error: section.error }, { status: 400 });
+
     const product = await HubProduct.create({
       vendorId: vendor._id,
-      category: resolveCategory(body.category, vendor.categories[0] ?? "food"),
+      // The Hub category always follows the store's own category.
+      category: vendor.categories[0] ?? "food",
+      section: section.value || undefined,
       name,
       description: body.description || undefined,
       imageUrl: body.imageUrl || undefined,

@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import ImageUpload from "@/components/ImageUpload";
 
 interface Vendor {
   businessName: string;
@@ -14,6 +15,8 @@ interface Vendor {
   phone: string;
   address: string;
   description?: string;
+  logoUrl?: string;
+  tagline?: string;
 }
 
 export default function StoreInformationPage() {
@@ -55,6 +58,12 @@ export default function StoreInformationPage() {
     }
   };
 
+  // The logo saves as soon as it's uploaded (or removed).
+  const handleLogoChange = async (url: string) => {
+    const message = await save({ logoUrl: url });
+    setError(message);
+  };
+
   if (loading) return <ProfileSkeleton />;
   if (!vendor) {
     return (
@@ -78,7 +87,19 @@ export default function StoreInformationPage() {
       )}
 
       <div className="space-y-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-ink">Store logo</label>
+          <p className="mb-2 text-xs text-ink-muted">Shown on your store in the Crafteey Hub.</p>
+          <ImageUpload kind="logo" value={vendor.logoUrl || ""} onChange={handleLogoChange} />
+        </div>
+
         <EditableField label="Business name" value={vendor.businessName} onSave={(v) => save({ businessName: v })} />
+        <EditableField
+          label="Tagline"
+          hint="A short line shown under your store name in the Hub (up to 80 characters)."
+          value={vendor.tagline || ""}
+          onSave={(v) => save({ tagline: v })}
+        />
         <EditableField label="Phone" value={vendor.phone} onSave={(v) => save({ phone: v })} />
         <EditableField label="Address" value={vendor.address} onSave={(v) => save({ address: v })} />
         <EditableField
@@ -95,10 +116,12 @@ function EditableField({
   label,
   value,
   onSave,
+  hint,
 }: {
   label: string;
   value: string;
   onSave: (v: string) => Promise<string | null>;
+  hint?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -125,6 +148,7 @@ function EditableField({
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
+      {hint && <p className="mb-1 text-xs text-ink-muted">{hint}</p>}
       {editing ? (
         <div className="space-y-2">
           <div className="flex gap-2">
@@ -164,7 +188,8 @@ function ProfileSkeleton() {
   return (
     <div className="max-w-lg space-y-5">
       <Skeleton className="h-6 w-40" />
-      {[0, 1, 2, 3].map((i) => (
+      <Skeleton className="h-28 w-28 rounded-2xl" />
+      {[0, 1, 2, 3, 4].map((i) => (
         <div key={i} className="space-y-1.5">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-11 rounded-xl" />

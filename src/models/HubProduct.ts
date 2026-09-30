@@ -5,6 +5,7 @@ import { HUB_CATEGORIES, type HubCategory } from "@/lib/hub/config";
 export interface IHubProduct {
   vendorId: Types.ObjectId;
   category: HubCategory;
+  section?: string; // menu section shown on the store page, e.g. "Rice Dishes"
   name: string;
   description?: string;
   imageUrl?: string;
@@ -22,6 +23,7 @@ const HubProductSchema = new Schema<IHubProduct>(
   {
     vendorId: { type: Schema.Types.ObjectId, ref: "HubVendor", required: true, index: true },
     category: { type: String, enum: HUB_CATEGORIES, required: true, index: true },
+    section: { type: String, trim: true, maxlength: 40 },
     name: { type: String, required: true, trim: true },
     description: String,
     imageUrl: String,

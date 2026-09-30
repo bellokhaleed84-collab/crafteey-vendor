@@ -23,6 +23,7 @@ interface Product {
   price: number;
   imageUrl?: string;
   category: string;
+  section?: string;
   variants?: Variant[];
   inStock: boolean;
 }
@@ -32,6 +33,9 @@ export default function ProductDetailPage() {
   const { getToken } = useAuth();
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
+  const [sections, setSections] = useState<string[]>([]);
+  const [editingSection, setEditingSection] = useState(false);
+  const [sectionDraft, setSectionDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,8 +45,9 @@ export default function ProductDetailPage() {
       const res = await apiFetch(getToken, "/api/products");
       if (!res.ok) throw new Error(await readError(res, "Couldn't load this product."));
       const data = await res.json();
-      const found = ((data.products ?? []) as Product[]).find((p) => p._id === id);
-      setProduct(found ?? null);
+      const all = (data.products ?? []) as Product[];
+      setProduct(all.find((p) => p._id === id) ?? null);
+      setSections([...new Set(all.map((p) => p.section).filter((s): s is string => Boolean(s)))].sort());
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't load this product.");
@@ -67,6 +72,25 @@ export default function ProductDetailPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't update stock.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveSection = async () => {
+    if (!product) return;
+    setBusy(true);
+    try {
+      const res = await apiFetch(getToken, `/api/products/${product._id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ section: sectionDraft }),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Couldn't update the menu section."));
+      setEditingSection(false);
+      setError(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update the menu section.");
     } finally {
       setBusy(false);
     }
@@ -137,9 +161,51 @@ export default function ProductDetailPage() {
         </div>
         <p className="mt-1 text-lg font-bold text-ink">₦{product.price.toLocaleString()}</p>
         {product.description && <p className="mt-2 text-sm text-ink-muted">{product.description}</p>}
-        <span className="mt-2 inline-block rounded-full bg-surface-border px-2.5 py-1 text-xs font-medium text-ink-muted">
-          {product.category}
-        </span>
+
+        <div className="mt-3">
+          {editingSection ? (
+            <div className="flex gap-2">
+              <input
+                list="menu-sections"
+                maxLength={40}
+                autoFocus
+                placeholder="e.g. Rice Dishes"
+                className="min-w-0 flex-1 rounded-xl border border-surface-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
+                value={sectionDraft}
+                onChange={(e) => setSectionDraft(e.target.value)}
+              />
+              <datalist id="menu-sections">
+                {sections.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+              <button
+                onClick={saveSection}
+                disabled={busy}
+                className="rounded-xl bg-brand px-3 text-sm font-semibold text-brand-ink disabled:opacity-60"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingSection(false)}
+                disabled={busy}
+                className="rounded-xl border border-surface-border px-3 text-sm font-semibold text-ink"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setSectionDraft(product.section ?? "");
+                setEditingSection(true);
+              }}
+              className="inline-block rounded-full bg-surface-border px-2.5 py-1 text-xs font-medium text-ink-muted"
+            >
+              {product.section ? `Menu section: ${product.section}` : "+ Add menu section"}
+            </button>
+          )}
+        </div>
       </div>
 
       {product.variants && product.variants.length > 0 && (

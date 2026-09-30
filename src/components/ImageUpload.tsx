@@ -10,15 +10,18 @@ export default function ImageUpload({
   value,
   onChange,
   onUploadingChange,
+  kind = "product",
 }: {
   value: string;
   onChange: (url: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
+  kind?: "product" | "logo";
 }) {
   const { getToken } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const isLogo = kind === "logo";
 
   const setBusy = (v: boolean) => {
     setUploading(v);
@@ -32,7 +35,10 @@ export default function ImageUpload({
 
     setBusy(true);
     try {
-      const signRes = await apiFetch(getToken, "/api/upload/sign", { method: "POST" });
+      const signRes = await apiFetch(getToken, "/api/upload/sign", {
+        method: "POST",
+        body: JSON.stringify({ kind }),
+      });
       if (!signRes.ok) throw new Error(await readError(signRes, "Couldn't start the upload."));
       const { cloudName, apiKey, timestamp, signature, folder } = await signRes.json();
 
@@ -72,28 +78,67 @@ export default function ImageUpload({
       />
 
       {value ? (
-        <div className="relative overflow-hidden rounded-2xl border border-surface-border">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="Product" className="h-48 w-full object-cover" />
-          <div className="absolute bottom-2 right-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-ink shadow"
-            >
-              {uploading ? "Uploading…" : "Change"}
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange("")}
-              disabled={uploading}
-              className="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-status-danger shadow"
-            >
-              Remove
-            </button>
+        isLogo ? (
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value}
+              alt="Store logo"
+              className="h-28 w-28 rounded-2xl border border-surface-border bg-surface object-contain"
+            />
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-full border border-surface-border px-4 py-1.5 text-xs font-medium text-ink"
+              >
+                {uploading ? "Uploading…" : "Change"}
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                disabled={uploading}
+                className="rounded-full border border-surface-border px-4 py-1.5 text-xs font-medium text-status-danger"
+              >
+                Remove
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative overflow-hidden rounded-2xl border border-surface-border">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={value} alt="Product" className="h-48 w-full object-cover" />
+            <div className="absolute bottom-2 right-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-ink shadow"
+              >
+                {uploading ? "Uploading…" : "Change"}
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                disabled={uploading}
+                className="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-status-danger shadow"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        )
+      ) : isLogo ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="flex h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-border bg-surface text-sm text-ink-muted"
+        >
+          {uploading ? "Uploading…" : "Tap to add logo"}
+          <span className="mt-1 text-xs text-ink-faint">Up to {MAX_MB}MB</span>
+        </button>
       ) : (
         <button
           type="button"
