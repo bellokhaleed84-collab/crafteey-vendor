@@ -122,7 +122,12 @@ export default function SettingsPage() {
           label="Store Tier"
           hint="Commission and Hub visibility"
         />
-        <ComingSoonRow icon={Clock} label="Opening Hours" hint="Set your daily schedule" />
+        <SettingsRow
+          href="/dashboard/settings/hours"
+          icon={Clock}
+          label="Opening Hours"
+          hint="When you open and close each day"
+        />
         <ComingSoonRow icon={Navigation} label="Pickup Instructions" hint="Notes for riders" />
         <ComingSoonRow icon={FileText} label="Business Documents" hint="CAC, ID and verification" />
       </Card>

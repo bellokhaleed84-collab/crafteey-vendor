@@ -25,6 +25,9 @@ export interface IHubVendor {
   reviewCount?: number;
   etaMin?: number;
   etaMax?: number;
+  /** 24-hour "HH:mm", e.g. "08:00" */
+  openTime?: string;
+  closeTime?: string;
   isOpen: boolean;
   isActive: boolean;
   isSeed?: boolean;
@@ -52,6 +55,8 @@ const HubVendorSchema = new Schema<IHubVendor>(
     reviewCount: { type: Number, min: 0 },
     etaMin: Number,
     etaMax: Number,
+    openTime: String,
+    closeTime: String,
     isOpen: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
     isSeed: { type: Boolean, default: false },
