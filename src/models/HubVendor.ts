@@ -1,46 +1,67 @@
-import HubVendor from "@/models/HubVendor";
-import Vendor from "@/models/Vendor";
-import type { HubCategory } from "@/lib/hub/config";
-import { isVendorApproved } from "@/lib/vendorApproval";
-import { isVendorTier } from "@/lib/vendorTiers";
+import mongoose, { Schema, type Model } from "mongoose";
 
-const CATEGORY_MAP: Record<string, HubCategory> = {
-  Restaurant: "food",
-  Bakery: "food",
-  Groceries: "groceries",
-  "Provisions Store": "groceries",
-  "Drinks & Beverages": "drinks",
-  Pharmacy: "marketplace",
-  Other: "marketplace",
-};
+// Mirrors crafteey-client's HubVendor schema. Both apps share the same
+// MongoDB database and collection, so this app needs its own local copy
+// of the model to query/create HubVendor documents — Mongoose models
+// aren't shared across separate Next.js projects even when they point
+// at the same database.
 
-// Returns the vendor's Hub listing, creating it on demand if it doesn't exist yet.
-// Returns null only if the vendor profile is missing or not approved
-// (isVendorApproved respects NEXT_PUBLIC_REQUIRE_VENDOR_APPROVAL).
-export async function getLinkedHubVendor(uid: string) {
-  const existing = await HubVendor.findOne({ ownerUid: uid, isActive: true });
-  if (existing) return existing;
+export type HubCategory = "food" | "groceries" | "drinks" | "marketplace";
+export type VendorTier = "basic" | "regular" | "premium";
 
-  const vendor = await Vendor.findOne({ uid });
-  if (!vendor || !isVendorApproved(vendor)) return null;
-
-  try {
-    return await HubVendor.create({
-      ownerUid: uid,
-      name: vendor.businessName,
-      categories: [CATEGORY_MAP[vendor.category] ?? "marketplace"],
-      address: vendor.address || undefined,
-      logoUrl: vendor.logoUrl || undefined,
-      tagline: vendor.tagline || undefined,
-      isOpen: Boolean(vendor.isOpen),
-      isActive: true,
-      isSeed: false,
-      // The tier the vendor picked at registration. Vendors created before
-      // tier selection existed have none, so they fall back to "basic".
-      tier: isVendorTier(vendor.tier) ? vendor.tier : "basic",
-    });
-  } catch {
-    // Duplicate key: another request created it at the same moment.
-    return HubVendor.findOne({ ownerUid: uid, isActive: true });
-  }
+export interface IHubVendor {
+  ownerUid?: string;
+  name: string;
+  categories: HubCategory[];
+  description?: string;
+  logoUrl?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  emoji?: string;
+  tagline?: string;
+  filterTags?: string[];
+  rating?: number;
+  reviewCount?: number;
+  etaMin?: number;
+  etaMax?: number;
+  isOpen: boolean;
+  isActive: boolean;
+  isSeed?: boolean;
+  tier: VendorTier;
 }
+
+const HubVendorSchema = new Schema<IHubVendor>(
+  {
+    ownerUid: { type: String, index: true, sparse: true, unique: true },
+    name: { type: String, required: true, trim: true },
+    categories: {
+      type: [{ type: String, enum: ["food", "groceries", "drinks", "marketplace"] }],
+      default: [],
+      index: true,
+    },
+    description: String,
+    logoUrl: String,
+    address: String,
+    lat: Number,
+    lng: Number,
+    emoji: String,
+    tagline: String,
+    filterTags: { type: [String], default: [] },
+    rating: { type: Number, min: 0, max: 5 },
+    reviewCount: { type: Number, min: 0 },
+    etaMin: Number,
+    etaMax: Number,
+    isOpen: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
+    isSeed: { type: Boolean, default: false },
+    tier: { type: String, enum: ["basic", "regular", "premium"], default: "regular", index: true },
+  },
+  { timestamps: true }
+);
+
+const HubVendor: Model<IHubVendor> =
+  (mongoose.models.HubVendor as Model<IHubVendor>) ||
+  mongoose.model<IHubVendor>("HubVendor", HubVendorSchema);
+
+export default HubVendor;
