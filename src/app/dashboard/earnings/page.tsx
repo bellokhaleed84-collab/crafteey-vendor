@@ -5,37 +5,55 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { TIER_INFO, isVendorTier, type VendorTier } from "@/lib/vendorTiers";
 
-interface Order {
-  _id: string;
-  subtotal: number;
-  total: number;
-  status: string;
-  createdAt: string;
+interface Totals {
+  earnedPayoutKobo: number;
+  earnedSalesKobo: number;
+  earnedCommissionKobo: number;
+  earnedCount: number;
+  pendingPayoutKobo: number;
+  pendingCount: number;
+  todayPayoutKobo: number;
+  todayCount: number;
+  weekPayoutKobo: number;
+  weekCount: number;
 }
 
-const COMMISSION_RATE = 0.15; // TODO: replace with the vendor's real tier rate
+interface HistoryRow {
+  _id: string;
+  orderNumber?: string;
+  deliveredAt: string;
+  subtotalKobo: number;
+  payoutKobo: number;
+  commissionKobo: number;
+}
+
+interface EarningsData {
+  tier: VendorTier | null;
+  totals: Totals;
+  history: HistoryRow[];
+}
 
 type TabKey = "overview" | "history";
 
-function isSameDay(iso: string, ref: Date): boolean {
-  const d = new Date(iso);
-  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
+// Amounts come from the server in kobo.
+function naira(kobo: number): string {
+  return `₦${(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
 export default function EarningsPage() {
   const { getToken } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [data, setData] = useState<EarningsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("overview");
 
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch(getToken, "/api/orders?status=delivered");
+      const res = await apiFetch(getToken, "/api/earnings");
       if (!res.ok) throw new Error(await readError(res, "Couldn't load your earnings."));
-      const data = await res.json();
-      setOrders(data.orders ?? []);
+      setData(await res.json());
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't load your earnings.");
@@ -50,17 +68,16 @@ export default function EarningsPage() {
 
   if (loading) return <EarningsSkeleton />;
 
-  // Item-subtotal is what commission applies to — delivery fees are not
-  // vendor income (riders keep 80%, per the platform's delivery-fee model),
-  // so they're intentionally excluded here rather than shown as earnings.
-  const itemSales = orders.reduce((sum, o) => sum + o.subtotal, 0);
-  const commission = itemSales * COMMISSION_RATE;
-  const netEarnings = itemSales - commission;
+  if (!data) {
+    return (
+      <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
+        {error ?? "Couldn't load your earnings."}
+      </p>
+    );
+  }
 
-  const today = new Date();
-  const todaySales = orders
-    .filter((o) => isSameDay(o.createdAt, today))
-    .reduce((sum, o) => sum + o.subtotal, 0);
+  const { totals, history, tier } = data;
+  const tierInfo = isVendorTier(tier) ? TIER_INFO[tier] : null;
 
   return (
     <div className="space-y-5">
@@ -72,26 +89,46 @@ export default function EarningsPage() {
 
       <Card className="bg-brand p-5">
         <p className="text-xs font-medium text-brand-ink/70">Net Earnings</p>
-        <p className="mt-1 text-2xl font-bold text-brand-ink">₦{Math.round(netEarnings).toLocaleString()}</p>
-        <p className="mt-1 text-xs text-brand-ink/70">From {orders.length} delivered order{orders.length === 1 ? "" : "s"}</p>
+        <p className="mt-1 text-2xl font-bold text-brand-ink">{naira(totals.earnedPayoutKobo)}</p>
+        <p className="mt-1 text-xs text-brand-ink/70">
+          From {totals.earnedCount} delivered order{totals.earnedCount === 1 ? "" : "s"}
+        </p>
       </Card>
+
+      {totals.pendingCount > 0 && (
+        <Card className="flex items-center justify-between bg-surface-muted p-4">
+          <div>
+            <p className="text-xs text-ink-muted">In progress</p>
+            <p className="text-xs text-ink-faint">
+              {totals.pendingCount} paid order{totals.pendingCount === 1 ? "" : "s"} not delivered yet
+            </p>
+          </div>
+          <p className="text-lg font-bold text-ink">{naira(totals.pendingPayoutKobo)}</p>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4">
-          <p className="text-xs text-ink-muted">Item Sales</p>
-          <p className="mt-1 text-lg font-bold text-ink">₦{itemSales.toLocaleString()}</p>
+          <p className="text-xs text-ink-muted">Item sales</p>
+          <p className="mt-1 text-lg font-bold text-ink">{naira(totals.earnedSalesKobo)}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-ink-muted">Craftey Commission ({Math.round(COMMISSION_RATE * 100)}%)</p>
-          <p className="mt-1 text-lg font-bold text-ink">−₦{Math.round(commission).toLocaleString()}</p>
+          <p className="text-xs text-ink-muted">Crafteey commission</p>
+          <p className="mt-1 text-lg font-bold text-ink">−{naira(totals.earnedCommissionKobo)}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-ink-muted">Today&apos;s item sales</p>
-          <p className="mt-1 text-lg font-bold text-ink">₦{todaySales.toLocaleString()}</p>
+          <p className="text-xs text-ink-muted">Today</p>
+          <p className="mt-1 text-lg font-bold text-ink">{naira(totals.todayPayoutKobo)}</p>
+          <p className="text-xs text-ink-faint">
+            {totals.todayCount} order{totals.todayCount === 1 ? "" : "s"}
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-ink-muted">Orders completed</p>
-          <p className="mt-1 text-lg font-bold text-ink">{orders.length}</p>
+          <p className="text-xs text-ink-muted">This week</p>
+          <p className="mt-1 text-lg font-bold text-ink">{naira(totals.weekPayoutKobo)}</p>
+          <p className="text-xs text-ink-faint">
+            {totals.weekCount} order{totals.weekCount === 1 ? "" : "s"}
+          </p>
         </Card>
       </div>
 
@@ -110,40 +147,50 @@ export default function EarningsPage() {
       </div>
 
       {tab === "overview" ? (
-        <Card className="bg-surface-muted p-4 text-sm text-ink-muted">
-          Delivery fees are paid to riders, not deducted from your earnings — this
-          total reflects item sales only. Payout scheduling and a Payouts tab
-          aren&apos;t built yet.
+        <Card className="space-y-2 bg-surface-muted p-4 text-sm text-ink-muted">
+          {tierInfo && (
+            <p>
+              Your plan is <b className="text-ink">{tierInfo.label}</b> ({tierInfo.commissionPercent}% commission).
+              Each order keeps the rate from when it was placed, so a plan change only affects new orders.
+            </p>
+          )}
+          <p>
+            Earnings are your item sales minus Crafteey&apos;s commission. Delivery fees go to riders and are not
+            part of your earnings.
+          </p>
+          <p>Payout scheduling and a Payouts tab aren&apos;t built yet.</p>
         </Card>
       ) : (
         <div>
           <h2 className="mb-2 text-sm font-semibold text-ink-muted">Delivered orders</h2>
-          {orders.length === 0 ? (
+          {history.length === 0 ? (
             <p className="text-sm text-ink-muted">No delivered orders yet.</p>
           ) : (
-            <Card className="divide-y divide-surface-border">
-              {[...orders]
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .map((o) => {
-                  const orderCommission = o.subtotal * COMMISSION_RATE;
-                  return (
-                    <div key={o._id} className="flex items-center justify-between p-3 text-sm">
-                      <div>
-                        <p className="font-medium text-ink">#{o._id.slice(-6).toUpperCase()}</p>
-                        <p className="text-xs text-ink-faint">
-                          {new Date(o.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-ink">
-                          ₦{Math.round(o.subtotal - orderCommission).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-ink-faint">of ₦{o.subtotal.toLocaleString()}</p>
-                      </div>
+            <>
+              <Card className="divide-y divide-surface-border">
+                {history.map((o) => (
+                  <div key={o._id} className="flex items-center justify-between p-3 text-sm">
+                    <div>
+                      <p className="font-medium text-ink">
+                        #{o.orderNumber ?? o._id.slice(-6).toUpperCase()}
+                      </p>
+                      <p className="text-xs text-ink-faint">
+                        {new Date(o.deliveredAt).toLocaleDateString()}
+                      </p>
                     </div>
-                  );
-                })}
-            </Card>
+                    <div className="text-right">
+                      <p className="font-semibold text-ink">{naira(o.payoutKobo)}</p>
+                      <p className="text-xs text-ink-faint">of {naira(o.subtotalKobo)}</p>
+                    </div>
+                  </div>
+                ))}
+              </Card>
+              {totals.earnedCount > history.length && (
+                <p className="mt-2 text-center text-xs text-ink-faint">
+                  Showing your latest {history.length} orders.
+                </p>
+              )}
+            </>
           )}
         </div>
       )}
