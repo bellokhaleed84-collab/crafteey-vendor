@@ -8,6 +8,9 @@ import { isVendorApproved } from "@/lib/vendorApproval";
 
 type Cleaned = { ok: true; value: string } | { ok: false };
 
+// 24-hour "HH:mm"
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 // Logo must be an https Cloudinary link (what our signed upload returns).
 // Empty / null means "remove the logo".
 function cleanLogoUrl(raw: unknown): Cleaned {
@@ -42,7 +45,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ vendor });
+    // Opening hours live on the Hub listing (what customers see).
+    const hub = await HubVendor.findOne({ ownerUid: decoded.uid }).select("openTime closeTime").lean();
+
+    return NextResponse.json({
+      vendor: {
+        ...vendor.toObject(),
+        openTime: hub?.openTime ?? null,
+        closeTime: hub?.closeTime ?? null,
+      },
+    });
   } catch (err) {
     if (err instanceof AuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
@@ -65,6 +77,32 @@ export async function PATCH(req: NextRequest) {
     const existing = await Vendor.findOne({ uid: decoded.uid });
     if (!existing) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
+
+    // Opening hours: both times together, saved on the Hub listing only.
+    const hasHours = "openTime" in updates || "closeTime" in updates;
+    let hours: { openTime: string; closeTime: string } | null = null;
+    if (hasHours) {
+      const { openTime, closeTime } = updates as { openTime?: unknown; closeTime?: unknown };
+      if (
+        typeof openTime !== "string" ||
+        typeof closeTime !== "string" ||
+        !TIME_RE.test(openTime) ||
+        !TIME_RE.test(closeTime)
+      ) {
+        return NextResponse.json(
+          { error: "Opening and closing times must both be set, like 08:00." },
+          { status: 400 }
+        );
+      }
+      const listing = await HubVendor.exists({ ownerUid: decoded.uid });
+      if (!listing) {
+        return NextResponse.json(
+          { error: "Your store isn't listed in the Hub yet, so hours can't be saved." },
+          { status: 409 }
+        );
+      }
+      hours = { openTime, closeTime };
     }
 
     // Only allow editable fields to change via this route
@@ -153,20 +191,24 @@ export async function PATCH(req: NextRequest) {
 
     const hasSet = Object.keys(patch).length > 0;
     const hasUnset = Object.keys(unset).length > 0;
-    if (!hasSet && !hasUnset) {
+    if (!hasSet && !hasUnset && !hours) {
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }
 
-    const vendor = await Vendor.findOneAndUpdate(
-      { uid: decoded.uid },
-      {
-        ...(hasSet ? { $set: patch } : {}),
-        ...(hasUnset ? { $unset: unset } : {}),
-      },
-      { new: true, runValidators: true }
-    );
-    if (!vendor) {
-      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    let vendor = existing;
+    if (hasSet || hasUnset) {
+      const updated = await Vendor.findOneAndUpdate(
+        { uid: decoded.uid },
+        {
+          ...(hasSet ? { $set: patch } : {}),
+          ...(hasUnset ? { $unset: unset } : {}),
+        },
+        { new: true, runValidators: true }
+      );
+      if (!updated) {
+        return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+      }
+      vendor = updated;
     }
 
     // Mirror the fields customers see onto the Hub listing. updateOne (not
@@ -181,6 +223,10 @@ export async function PATCH(req: NextRequest) {
     else if ("logoUrl" in unset) hubUnset.logoUrl = "";
     if ("tagline" in patch) hubSet.tagline = patch.tagline;
     else if ("tagline" in unset) hubUnset.tagline = "";
+    if (hours) {
+      hubSet.openTime = hours.openTime;
+      hubSet.closeTime = hours.closeTime;
+    }
 
     const hubHasSet = Object.keys(hubSet).length > 0;
     const hubHasUnset = Object.keys(hubUnset).length > 0;
@@ -194,7 +240,12 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ vendor });
+    return NextResponse.json({
+      vendor: {
+        ...vendor.toObject(),
+        ...(hours ?? {}),
+      },
+    });
   } catch (err) {
     if (err instanceof AuthError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
