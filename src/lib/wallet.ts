@@ -1,5 +1,5 @@
 import { type ClientSession, type Types, type UpdateQuery } from "mongoose";
-import Wallet, { type IWallet } from "@/models/wallet";
+import Wallet, { type IWallet } from "@/models/Wallet";
 import WalletTransaction, { type WalletReason } from "@/models/WalletTransaction";
 
 export interface MoveInput {
