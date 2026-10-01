@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import HubVendor from "@/models/HubVendor";
-import { resolveStore } from "@/lib/storeAccess";
+import { resolveStoreForUser, type StoreUser } from "@/lib/storeAccess";
 
 export async function GET(req: NextRequest) {
   try {
     const decoded = await verifyToken(req);
     await connectToDatabase();
 
-    const access = await resolveStore(decoded.uid);
+    // Also activates an invite when this login has a VERIFIED email that an
+    // owner added as staff. Without this, new staff were never let in.
+    const access = await resolveStoreForUser(decoded as unknown as StoreUser);
     if (!access) return NextResponse.json({ error: "Not part of a store" }, { status: 404 });
 
     const store = await HubVendor.findById(access.vendorId).select("name isOpen").lean();
