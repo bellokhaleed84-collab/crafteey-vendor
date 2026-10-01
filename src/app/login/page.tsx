@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyAuthError } from "@/lib/authErrors";
 import { fetchMyVendor, routeForVendor } from "@/lib/vendorApi";
+import { fetchMyStaffAccess } from "@/lib/staffApi";
 
 export default function LoginPage() {
   const { signIn, signOut, getToken, resetPassword } = useAuth();
@@ -29,9 +30,20 @@ export default function LoginPage() {
 
       const vendor = await fetchMyVendor(token);
       if (!vendor) {
+        // Not a store owner: maybe staff added by an owner.
+        const staff = await fetchMyStaffAccess(token);
+        if (staff.kind === "staff") {
+          router.replace("/dashboard/orders");
+          return;
+        }
+        if (staff.kind === "needs_verification") {
+          // The dashboard guard shows the verify-your-email screen.
+          router.replace("/dashboard");
+          return;
+        }
         await signOut();
         setError(
-          "No vendor profile is linked to this account. Register your store first."
+          "No store is linked to this account. Register your store, or ask your store owner to add this email as staff."
         );
         return;
       }
@@ -126,6 +138,12 @@ export default function LoginPage() {
           Don&apos;t have an account?{" "}
           <Link href="/register" className="font-semibold text-brand-dark">
             Register
+          </Link>
+        </p>
+        <p className="text-center text-sm text-ink-muted">
+          Joining a store as staff?{" "}
+          <Link href="/staff-signup" className="font-semibold text-brand-dark">
+            Create your staff account
           </Link>
         </p>
       </form>

@@ -4,7 +4,6 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Home, ClipboardList, Package, Wallet, MoreHorizontal } from "lucide-react";
-import VendorGuard from "@/components/VendorGuard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreAccess } from "@/contexts/StoreRoleContext";
 
@@ -21,8 +20,7 @@ const NAV_ITEMS = [
   },
 ];
 
-// Lives inside VendorGuard, which tells it whether this person is the owner or staff.
-function Shell({ children }: { children: ReactNode }) {
+export default function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
@@ -91,13 +89,5 @@ function Shell({ children }: { children: ReactNode }) {
         </div>
       </nav>
     </div>
-  );
-}
-
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return (
-    <VendorGuard>
-      <Shell>{children}</Shell>
-    </VendorGuard>
   );
 }

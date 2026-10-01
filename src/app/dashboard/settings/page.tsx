@@ -11,6 +11,7 @@ import {
   Power,
   ChevronRight,
   Award,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
@@ -121,6 +122,12 @@ export default function SettingsPage() {
           icon={Award}
           label="Store Tier"
           hint="Commission and Hub visibility"
+        />
+        <SettingsRow
+          href="/dashboard/settings/staff"
+          icon={Users}
+          label="Staff"
+          hint="Let your team receive orders"
         />
         <SettingsRow
           href="/dashboard/settings/hours"

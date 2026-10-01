@@ -2,30 +2,36 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import HubOrder from "@/models/HubOrder";
-import HubVendor from "@/models/HubVendor";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { orderStage, toVendorOrder } from "@/lib/hubOrderMapper";
 import { rejectOrder } from "@/lib/hub/rejectOrder";
+import { resolveStoreForUser } from "@/lib/storeAccess";
 
 type Ctx = { params: { id: string } };
 
-async function findVendor(req: NextRequest, id: string) {
+// The store this person works for: the owner's store, or the store they're active staff at.
+async function findStore(req: NextRequest, id: string) {
   const decoded = await verifyToken(req);
   await connectToDatabase();
   if (!mongoose.isValidObjectId(id)) return null;
-  return HubVendor.findOne({ ownerUid: decoded.uid });
+  return resolveStoreForUser(decoded);
+}
+
+// Staff don't see what the store earns.
+function forRole(role: "owner" | "staff", o: ReturnType<typeof toVendorOrder>) {
+  return role === "staff" ? { ...o, vendorPayout: undefined } : o;
 }
 
 export async function GET(req: NextRequest, { params }: Ctx) {
   try {
-    const vendor = await findVendor(req, params.id);
-    if (!vendor) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    const store = await findStore(req, params.id);
+    if (!store) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
-    const order = await HubOrder.findOne({ _id: params.id, vendorId: vendor._id }).lean();
+    const order = await HubOrder.findOne({ _id: params.id, vendorId: store.vendorId }).lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     return NextResponse.json({
-      order: toVendorOrder(order as unknown as Parameters<typeof toVendorOrder>[0]),
+      order: forRole(store.role, toVendorOrder(order as unknown as Parameters<typeof toVendorOrder>[0])),
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -39,11 +45,11 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 // Body: { action: "accept" | "ready" | "reject", reason?: string }
 export async function PATCH(req: NextRequest, { params }: Ctx) {
   try {
-    const vendor = await findVendor(req, params.id);
-    if (!vendor) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    const store = await findStore(req, params.id);
+    if (!store) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     const { action, reason } = await req.json();
-    const order = await HubOrder.findOne({ _id: params.id, vendorId: vendor._id });
+    const order = await HubOrder.findOne({ _id: params.id, vendorId: store.vendorId });
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     // Reject is a transaction (cancel + wallet refund + cancel rider job),
@@ -52,7 +58,10 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       // A second tap on an already-refunded order changes nothing.
       if (order.refund?.status === "refunded") {
         return NextResponse.json({
-          order: toVendorOrder(order.toObject() as unknown as Parameters<typeof toVendorOrder>[0]),
+          order: forRole(
+            store.role,
+            toVendorOrder(order.toObject() as unknown as Parameters<typeof toVendorOrder>[0])
+          ),
         });
       }
 
@@ -69,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
 
       const result = await rejectOrder({
         orderId: params.id,
-        vendorId: vendor._id,
+        vendorId: store.vendorId,
         reason: typeof reason === "string" ? reason : undefined,
       });
       if (!result.ok) {
@@ -79,7 +88,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       const fresh = await HubOrder.findById(order._id).lean();
       if (!fresh) return NextResponse.json({ error: "Order not found" }, { status: 404 });
       return NextResponse.json({
-        order: toVendorOrder(fresh as unknown as Parameters<typeof toVendorOrder>[0]),
+        order: forRole(store.role, toVendorOrder(fresh as unknown as Parameters<typeof toVendorOrder>[0])),
         refundedKobo: result.refundedKobo,
       });
     }
@@ -87,7 +96,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const stage = orderStage(order);
     const now = new Date();
     // Guard against races (e.g. the rider updating status at the same moment).
-    const base = { _id: order._id, vendorId: vendor._id, status: order.status };
+    const base = { _id: order._id, vendorId: store.vendorId, status: order.status };
     let updated;
 
     if (action === "accept") {
@@ -116,7 +125,10 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       return NextResponse.json({ error: "This order just changed. Refresh and try again." }, { status: 409 });
     }
     return NextResponse.json({
-      order: toVendorOrder(updated.toObject() as unknown as Parameters<typeof toVendorOrder>[0]),
+      order: forRole(
+        store.role,
+        toVendorOrder(updated.toObject() as unknown as Parameters<typeof toVendorOrder>[0])
+      ),
     });
   } catch (err) {
     if (err instanceof AuthError) {

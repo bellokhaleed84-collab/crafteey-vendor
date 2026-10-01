@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStoreAccess } from "@/contexts/StoreRoleContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -17,7 +18,8 @@ interface Order {
   stage: Stage;
   items: { name: string; quantity: number; unitPrice: number }[];
   subtotal: number;
-  vendorPayout: number;
+  /** Not sent to staff. */
+  vendorPayout?: number;
   placedAt: string;
 }
 
@@ -62,6 +64,7 @@ const POLL_MS = 15000;
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { getToken } = useAuth();
+  const { role } = useStoreAccess();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -211,7 +214,7 @@ export default function OrderDetailPage() {
           <span>Items subtotal</span>
           <span>₦{order.subtotal.toLocaleString()}</span>
         </div>
-        {!cancelled && (
+        {!cancelled && role === "owner" && order.vendorPayout !== undefined && (
           <div className="flex justify-between p-3 font-semibold text-ink">
             <span>Your payout</span>
             <span>₦{order.vendorPayout.toLocaleString()}</span>
