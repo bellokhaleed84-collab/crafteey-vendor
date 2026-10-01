@@ -84,7 +84,7 @@ export default function StaffSignupPage() {
 
         <p className="text-center text-sm text-ink-muted">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-brand-dark">
+          <Link href="/login?as=staff" className="font-semibold text-brand-dark">
             Log in
           </Link>
         </p>

@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyVendor, type VendorProfile } from "@/lib/vendorApi";
+import { fetchMyStaffAccess } from "@/lib/staffApi";
 import { isVendorApproved } from "@/lib/vendorApproval";
 
 export default function PendingPage() {
@@ -21,6 +23,13 @@ export default function PendingPage() {
       if (!token) return;
       const v = await fetchMyVendor(token);
       if (!v) {
+        // No store of their own: maybe they've been added as staff since.
+        const staff = await fetchMyStaffAccess(token);
+        if (staff.kind === "staff" || staff.kind === "needs_verification") {
+          // The dashboard guard shows the orders screen or the verify screen.
+          router.replace("/dashboard");
+          return;
+        }
         setMissing(true);
         return;
       }
@@ -62,7 +71,23 @@ export default function PendingPage() {
           <>
             <h1 className="text-2xl font-bold">No store found</h1>
             <p className="text-sm text-gray-600">
-              This account doesn&apos;t have a vendor profile yet.
+              This account isn&apos;t linked to a store yet.
+            </p>
+            {user?.email && (
+              <p className="text-sm text-gray-600">
+                Signed in as <b className="break-all">{user.email}</b>
+              </p>
+            )}
+            <p className="text-sm text-gray-600">
+              <b>Staff:</b> ask your store owner to add this exact email in Settings → Staff, then
+              tap Check again.
+            </p>
+            <p className="text-sm text-gray-600">
+              <b>Store owner:</b>{" "}
+              <Link href="/register" className="font-semibold underline">
+                register your store
+              </Link>
+              .
             </p>
           </>
         ) : status === "rejected" ? (
