@@ -3,6 +3,15 @@ import { HUB_ORDER_STATUSES, type HubOrderStatus } from "@/lib/hub/config";
 
 // Mirrors crafteey-client's HubOrder (same "HubOrder" collection), plus the
 // optional vendor-progress and refund fields.
+export interface IHubOrderOption {
+  groupName?: string;
+  choiceName?: string;
+  /** how many of this choice on ONE plate */
+  quantity?: number;
+  priceKobo?: number;
+  imageUrl?: string;
+}
+
 export interface IHubOrder {
   _id: Types.ObjectId;
   clientId: Types.ObjectId;
@@ -10,7 +19,14 @@ export interface IHubOrder {
   vendorId: Types.ObjectId;
   vendorName: string;
   orderNumber: string;
-  items: { productId: Types.ObjectId; name: string; imageUrl?: string; unitPriceKobo: number; quantity: number }[];
+  items: {
+    productId: Types.ObjectId;
+    name: string;
+    imageUrl?: string;
+    unitPriceKobo: number;
+    quantity: number;
+    options?: IHubOrderOption[];
+  }[];
   subtotalKobo: number;
   deliveryFeeKobo: number;
   totalKobo: number;
@@ -50,6 +66,16 @@ const HubOrderSchema = new Schema<IHubOrder>(
         imageUrl: String,
         unitPriceKobo: { type: Number, required: true },
         quantity: { type: Number, required: true, min: 1 },
+        options: [
+          {
+            _id: false,
+            groupName: String,
+            choiceName: String,
+            quantity: Number,
+            priceKobo: Number,
+            imageUrl: String,
+          },
+        ],
       },
     ],
     subtotalKobo: { type: Number, required: true },

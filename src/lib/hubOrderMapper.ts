@@ -28,6 +28,13 @@ export function toVendorOrder(o: OrderDoc) {
       quantity: i.quantity,
       imageUrl: i.imageUrl ?? "",
       unitPrice: i.unitPriceKobo / 100,
+      // Extras and portion picked for ONE plate. Older orders have none.
+      options: (i.options ?? []).map((op) => ({
+        groupName: op.groupName ?? "",
+        choiceName: op.choiceName ?? "",
+        quantity: op.quantity ?? 1,
+        imageUrl: op.imageUrl ?? "",
+      })),
     })),
     subtotal: o.subtotalKobo / 100,
     vendorPayout: o.vendorPayoutKobo / 100,

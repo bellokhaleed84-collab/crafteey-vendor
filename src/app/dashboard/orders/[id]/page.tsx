@@ -12,11 +12,19 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 type Stage = "new" | "preparing" | "ready" | "picked_up" | "delivered" | "cancelled";
 
+interface OrderOption {
+  groupName: string;
+  choiceName: string;
+  /** per plate */
+  quantity: number;
+  imageUrl?: string;
+}
+
 interface Order {
   _id: string;
   orderNumber: string;
   stage: Stage;
-  items: { name: string; quantity: number; unitPrice: number }[];
+  items: { name: string; quantity: number; unitPrice: number; options?: OrderOption[] }[];
   subtotal: number;
   /** Not sent to staff. */
   vendorPayout?: number;
@@ -60,6 +68,17 @@ const TRAIL: { stage: Stage; label: string }[] = [
 ];
 
 const POLL_MS = 15000;
+
+// Group the picked options by their group name, e.g. Portion / Extras.
+function groupOptions(options: OrderOption[]) {
+  const groups: { name: string; items: OrderOption[] }[] = [];
+  for (const o of options) {
+    const found = groups.find((g) => g.name === o.groupName);
+    if (found) found.items.push(o);
+    else groups.push({ name: o.groupName, items: [o] });
+  }
+  return groups;
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -202,22 +221,69 @@ export default function OrderDetailPage() {
       )}
 
       <Card className="divide-y divide-surface-border">
-        {order.items.map((item, idx) => (
-          <div key={idx} className="flex justify-between p-3 text-sm">
-            <span className="text-ink">
-              {item.quantity}x {item.name}
-            </span>
-            <span className="text-ink">₦{(item.unitPrice * item.quantity).toLocaleString()}</span>
-          </div>
-        ))}
+        {order.items.map((item, idx) => {
+          const groups = groupOptions(item.options ?? []);
+          return (
+            <div key={idx} className="p-3 text-sm">
+              <div className="flex justify-between">
+                <span className="font-medium text-ink">
+                  {item.quantity}x {item.name}
+                </span>
+                <span className="text-ink">
+                  {"\u20A6"}
+                  {(item.unitPrice * item.quantity).toLocaleString()}
+                </span>
+              </div>
+
+              {groups.length > 0 && (
+                <div className="mt-2 space-y-1.5 rounded-lg bg-surface-muted p-2.5">
+                  {item.quantity > 1 && (
+                    <p className="text-xs font-semibold text-ink">Each plate:</p>
+                  )}
+                  {groups.map((g) => (
+                    <div key={g.name} className="text-ink-muted">
+                      <span className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                        {g.name}
+                      </span>
+                      <div className="mt-0.5 space-y-1">
+                        {g.items.map((o, oi) => (
+                          <div key={oi} className="flex items-center gap-2">
+                            {o.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={o.imageUrl}
+                                alt=""
+                                className="h-8 w-8 shrink-0 rounded-md object-cover"
+                              />
+                            ) : null}
+                            <span className="text-ink">
+                              {o.quantity > 1 ? `${o.quantity} \u00D7 ` : ""}
+                              {o.choiceName}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
         <div className="flex justify-between p-3 text-sm text-ink-muted">
           <span>Items subtotal</span>
-          <span>₦{order.subtotal.toLocaleString()}</span>
+          <span>
+            {"\u20A6"}
+            {order.subtotal.toLocaleString()}
+          </span>
         </div>
         {!cancelled && role === "owner" && order.vendorPayout !== undefined && (
           <div className="flex justify-between p-3 font-semibold text-ink">
             <span>Your payout</span>
-            <span>₦{order.vendorPayout.toLocaleString()}</span>
+            <span>
+              {"\u20A6"}
+              {order.vendorPayout.toLocaleString()}
+            </span>
           </div>
         )}
       </Card>

@@ -11,11 +11,14 @@ export default function ImageUpload({
   onChange,
   onUploadingChange,
   kind = "product",
+  compact = false,
 }: {
   value: string;
   onChange: (url: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
   kind?: "product" | "logo";
+  /** Small thumbnail style, used for option choice photos. */
+  compact?: boolean;
 }) {
   const { getToken } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -93,13 +96,40 @@ export default function ImageUpload({
                 disabled={uploading}
                 className="rounded-full border border-surface-border px-4 py-1.5 text-xs font-medium text-ink"
               >
-                {uploading ? "Uploading…" : "Change"}
+                {uploading ? "Uploading\u2026" : "Change"}
               </button>
               <button
                 type="button"
                 onClick={() => onChange("")}
                 disabled={uploading}
                 className="rounded-full border border-surface-border px-4 py-1.5 text-xs font-medium text-status-danger"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : compact ? (
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value}
+              alt="Choice"
+              className="h-16 w-16 rounded-xl border border-surface-border object-cover"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-full border border-surface-border px-3 py-1 text-xs font-medium text-ink"
+              >
+                {uploading ? "Uploading\u2026" : "Change"}
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                disabled={uploading}
+                className="rounded-full border border-surface-border px-3 py-1 text-xs font-medium text-status-danger"
               >
                 Remove
               </button>
@@ -116,7 +146,7 @@ export default function ImageUpload({
                 disabled={uploading}
                 className="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-ink shadow"
               >
-                {uploading ? "Uploading…" : "Change"}
+                {uploading ? "Uploading\u2026" : "Change"}
               </button>
               <button
                 type="button"
@@ -136,8 +166,17 @@ export default function ImageUpload({
           disabled={uploading}
           className="flex h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-border bg-surface text-sm text-ink-muted"
         >
-          {uploading ? "Uploading…" : "Tap to add logo"}
+          {uploading ? "Uploading\u2026" : "Tap to add logo"}
           <span className="mt-1 text-xs text-ink-faint">Up to {MAX_MB}MB</span>
+        </button>
+      ) : compact ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="rounded-xl border-2 border-dashed border-surface-border bg-surface px-4 py-2.5 text-xs font-medium text-ink-muted"
+        >
+          {uploading ? "Uploading\u2026" : "Tap to add a photo"}
         </button>
       ) : (
         <button
@@ -146,7 +185,7 @@ export default function ImageUpload({
           disabled={uploading}
           className="flex h-40 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-border bg-surface text-sm text-ink-muted"
         >
-          {uploading ? "Uploading…" : "Tap to add a photo"}
+          {uploading ? "Uploading\u2026" : "Tap to add a photo"}
           <span className="mt-1 text-xs text-ink-faint">JPG or PNG, up to {MAX_MB}MB</span>
         </button>
       )}

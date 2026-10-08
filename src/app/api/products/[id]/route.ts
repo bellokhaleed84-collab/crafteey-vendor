@@ -5,6 +5,7 @@ import HubProduct, { type IHubProduct } from "@/models/HubProduct";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { getLinkedHubVendor } from "@/lib/hubVendor";
 import { toVendorProduct, nairaToKobo, parseSection } from "@/lib/hubProductMapper";
+import { parseOptionGroups } from "@/lib/optionGroups";
 
 async function authorize(req: NextRequest, id: string) {
   const decoded = await verifyToken(req);
@@ -45,6 +46,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       else unset.section = "";
     }
     if ("variants" in updates && Array.isArray(updates.variants)) set.variants = updates.variants;
+    if ("optionGroups" in updates) {
+      const groups = parseOptionGroups(updates.optionGroups);
+      if (!groups.ok) return NextResponse.json({ error: groups.error }, { status: 400 });
+      set.optionGroups = groups.value;
+    }
     if ("inStock" in updates) set.isAvailable = Boolean(updates.inStock);
     if ("price" in updates) {
       const kobo = nairaToKobo(updates.price);

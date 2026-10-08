@@ -8,11 +8,17 @@ import { ORDERS_REFRESH_EVENT } from "@/components/PushRegistrar";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 
+interface OrderOption {
+  groupName: string;
+  choiceName: string;
+  quantity: number;
+}
+
 interface Order {
   _id: string;
   orderNumber: string;
   stage: "new" | "preparing" | "ready" | "picked_up" | "delivered" | "cancelled";
-  items: { name: string; quantity: number }[];
+  items: { name: string; quantity: number; options?: OrderOption[] }[];
   subtotal: number;
   vendorPayout: number;
   placedAt: string;
@@ -43,6 +49,14 @@ const POLL_MS = 15000;
 
 function timeOf(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+// "2 \u00D7 Jollof Rice (Large, 4 \u00D7 Beef)"
+function itemSummary(i: Order["items"][number]): string {
+  const opts = (i.options ?? []).map((o) =>
+    o.quantity > 1 ? `${o.quantity} \u00D7 ${o.choiceName}` : o.choiceName
+  );
+  return `${i.quantity} \u00D7 ${i.name}` + (opts.length ? ` (${opts.join(", ")})` : "");
 }
 
 export default function OrdersPage() {
@@ -118,14 +132,14 @@ export default function OrdersPage() {
         <div className="space-y-3">
           {filtered.map((o) => {
             const itemCount = o.items.reduce((sum, i) => sum + i.quantity, 0);
-            const summary = o.items.map((i) => `${i.quantity} × ${i.name}`).join(", ");
+            const summary = o.items.map(itemSummary).join(", ");
             return (
               <Link key={o._id} href={`/dashboard/orders/${o._id}`}>
                 <Card className="p-4 transition hover:border-brand/40 hover:shadow-md">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-ink">{o.orderNumber}</p>
-                      <p className="truncate text-sm text-ink-muted">{summary}</p>
+                      <p className="line-clamp-2 text-sm text-ink-muted">{summary}</p>
                     </div>
                     <span
                       className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STAGE_BADGE[o.stage]}`}
@@ -135,7 +149,8 @@ export default function OrdersPage() {
                   </div>
                   <div className="mt-2 flex items-center justify-between text-sm">
                     <span className="text-ink-muted">
-                      {itemCount} item{itemCount === 1 ? "" : "s"} • ₦{o.subtotal.toLocaleString()}
+                      {itemCount} item{itemCount === 1 ? "" : "s"} {"\u2022"} {"\u20A6"}
+                      {o.subtotal.toLocaleString()}
                     </span>
                     <span className="text-xs text-ink-faint">{timeOf(o.placedAt)}</span>
                   </div>

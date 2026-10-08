@@ -4,6 +4,7 @@ import HubProduct from "@/models/HubProduct";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { getLinkedHubVendor } from "@/lib/hubVendor";
 import { toVendorProduct, nairaToKobo, parseSection } from "@/lib/hubProductMapper";
+import { parseOptionGroups } from "@/lib/optionGroups";
 
 export async function GET(req: NextRequest) {
   try {
@@ -52,6 +53,9 @@ export async function POST(req: NextRequest) {
     const section = parseSection(body.section);
     if (!section.ok) return NextResponse.json({ error: section.error }, { status: 400 });
 
+    const groups = parseOptionGroups(body.optionGroups);
+    if (!groups.ok) return NextResponse.json({ error: groups.error }, { status: 400 });
+
     const product = await HubProduct.create({
       vendorId: vendor._id,
       // The Hub category always follows the store's own category.
@@ -62,6 +66,7 @@ export async function POST(req: NextRequest) {
       imageUrl: body.imageUrl || undefined,
       priceKobo,
       variants: Array.isArray(body.variants) ? body.variants : [],
+      optionGroups: groups.value,
       isAvailable: body.inStock !== false,
       isActive: true,
       isSeed: false,

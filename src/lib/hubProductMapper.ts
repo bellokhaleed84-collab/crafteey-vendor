@@ -15,6 +15,19 @@ export function toVendorProduct(p: ProductDoc) {
     price: p.priceKobo / 100,
     inStock: p.isAvailable,
     variants: p.variants ?? [],
+    optionGroups: (p.optionGroups ?? []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      required: !!g.required,
+      single: !!g.single,
+      choices: (g.choices ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        price: c.priceKobo / 100,
+        imageUrl: c.imageUrl ?? "",
+        maxQty: c.maxQty ?? 1,
+      })),
+    })),
     createdAt: p.createdAt,
   };
 }
