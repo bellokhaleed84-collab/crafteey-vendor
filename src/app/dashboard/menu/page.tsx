@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, ChevronRight, Search, Package } from "lucide-react";
+import { Plus, ChevronRight, Search, Package, MoreVertical, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -28,6 +28,8 @@ export default function MenuPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -47,8 +49,9 @@ export default function MenuPage() {
     loadProducts();
   }, [loadProducts]);
 
-  const toggleStock = async (p: Product, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleStock = async (p: Product, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setMenuFor(null);
     try {
       const res = await apiFetch(getToken, `/api/products/${p._id}`, {
         method: "PATCH",
@@ -58,6 +61,21 @@ export default function MenuPage() {
       await loadProducts();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't update stock.");
+    }
+  };
+
+  const deleteProduct = async (p: Product) => {
+    setMenuFor(null);
+    if (!confirm(`Delete ${p.name}? This can't be undone.`)) return;
+    setBusyId(p._id);
+    try {
+      const res = await apiFetch(getToken, `/api/products/${p._id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await readError(res, "Couldn't delete this product."));
+      await loadProducts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't delete this product.");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -124,7 +142,7 @@ export default function MenuPage() {
             <Card
               key={p._id}
               onClick={() => router.push(`/dashboard/menu/${p._id}`)}
-              className="flex cursor-pointer items-center gap-3 p-3"
+              className={`relative flex cursor-pointer items-center gap-3 p-3 ${busyId === p._id ? "opacity-50" : ""}`}
             >
               {p.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -159,7 +177,53 @@ export default function MenuPage() {
                   </button>
                 </div>
               </div>
-              <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+              <button
+                aria-label="More options"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuFor(menuFor === p._id ? null : p._id);
+                }}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-muted"
+              >
+                <MoreVertical size={20} />
+              </button>
+
+              {menuFor === p._id && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuFor(null);
+                    }}
+                  />
+                  <div
+                    className="absolute right-3 top-14 z-30 w-52 overflow-hidden rounded-xl border border-surface-border bg-white shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => router.push(`/dashboard/menu/${p._id}`)}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-semibold text-ink"
+                    >
+                      <Pencil size={16} /> Edit
+                    </button>
+                    <button
+                      onClick={() => toggleStock(p)}
+                      className="flex w-full items-center gap-3 border-t border-surface-border px-4 py-3.5 text-left text-sm font-semibold text-ink"
+                    >
+                      {p.inStock ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {p.inStock ? "Mark out of stock" : "Mark in stock"}
+                    </button>
+                    <button
+                      onClick={() => deleteProduct(p)}
+                      className="flex w-full items-center gap-3 border-t border-surface-border px-4 py-3.5 text-left text-sm font-semibold text-status-danger"
+                    >
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </div>
+                </>
+              )}
+              {menuFor !== p._id && <ChevronRight size={0} className="hidden" />}
             </Card>
           ))}
         </div>

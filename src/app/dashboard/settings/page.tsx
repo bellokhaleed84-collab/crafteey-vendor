@@ -13,6 +13,8 @@ import {
   Award,
   Users,
   ChevronLeft,
+  Bell,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
@@ -144,6 +146,18 @@ export default function SettingsPage() {
           icon={Clock}
           label="Opening Hours"
           hint="When you open and close each day"
+        />
+        <SettingsRow
+          href="/dashboard/settings/notifications"
+          icon={Bell}
+          label="Notification Settings"
+          hint="Orders, promotions and system alerts"
+        />
+        <SettingsRow
+          href="/dashboard/settings/privacy"
+          icon={ShieldCheck}
+          label="Privacy & Security"
+          hint="Change your password"
         />
         <ComingSoonRow icon={Navigation} label="Pickup Instructions" hint="Notes for riders" />
         <ComingSoonRow icon={FileText} label="Business Documents" hint="CAC, ID and verification" />

@@ -23,6 +23,11 @@ export interface IVendor {
     accountNumber: string;
     bankName: string;
   };
+  notificationPrefs?: {
+    newOrders: boolean;
+    promotions: boolean;
+    system: boolean;
+  };
   verificationDocUrl?: string; // CAC doc or ID
   tier?: VendorTier; // chosen at registration; copied to HubVendor.tier
   tierRequest?: {
@@ -79,6 +84,11 @@ const VendorSchema = new Schema<IVendor>(
       accountName: { type: String },
       accountNumber: { type: String },
       bankName: { type: String }
+    },
+    notificationPrefs: {
+      newOrders: { type: Boolean, default: true },
+      promotions: { type: Boolean, default: true },
+      system: { type: Boolean, default: true }
     },
     verificationDocUrl: { type: String },
     tier: { type: String, enum: ["basic", "regular", "premium"] },

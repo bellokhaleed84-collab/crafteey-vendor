@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, Phone, Bike } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreAccess } from "@/contexts/StoreRoleContext";
 import { apiFetch, readError } from "@/lib/apiClient";
@@ -29,6 +29,12 @@ interface Order {
   /** Not sent to staff. */
   vendorPayout?: number;
   placedAt: string;
+}
+
+interface Rider {
+  firstName: string;
+  phone: string;
+  status: string;
 }
 
 const STAGE_LABELS: Record<Stage, string> = {
@@ -85,10 +91,22 @@ export default function OrderDetailPage() {
   const { getToken } = useAuth();
   const { role } = useStoreAccess();
   const [order, setOrder] = useState<Order | null>(null);
+  const [rider, setRider] = useState<Rider | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+
+  const loadRider = useCallback(async () => {
+    try {
+      const res = await apiFetch(getToken, `/api/orders/${id}/rider`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setRider(data.rider ?? null);
+    } catch {
+      // The rider card is optional; ignore failures.
+    }
+  }, [getToken, id]);
 
   const load = useCallback(async () => {
     try {
@@ -107,7 +125,8 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, id]);
+    loadRider();
+  }, [getToken, id, loadRider]);
 
   useEffect(() => {
     load();
@@ -160,6 +179,7 @@ export default function OrderDetailPage() {
   const actions = ACTIONS[order.stage] ?? [];
   const cancelled = order.stage === "cancelled";
   const trailIndex = TRAIL.findIndex((t) => t.stage === order.stage);
+  const showRider = !!rider && !cancelled && order.stage !== "delivered";
 
   return (
     <div className="max-w-lg space-y-5">
@@ -187,6 +207,26 @@ export default function OrderDetailPage() {
           {STAGE_LABELS[order.stage]}
         </span>
       </div>
+
+      {showRider && rider && (
+        <Card className="flex items-center gap-3 p-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-light text-brand-dark">
+            <Bike size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-ink-muted">Rider</p>
+            <p className="truncate font-bold text-ink">{rider.firstName}</p>
+          </div>
+          {rider.phone && (
+            <a
+              href={`tel:${rider.phone}`}
+              className="flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-brand-ink"
+            >
+              <Phone size={16} /> Call
+            </a>
+          )}
+        </Card>
+      )}
 
       {cancelled ? (
         <Card className="bg-surface-muted p-4 text-sm text-ink-muted">This order was cancelled.</Card>
@@ -317,7 +357,7 @@ export default function OrderDetailPage() {
 
       {order.stage === "ready" && (
         <Card className="bg-surface-muted p-4 text-sm text-ink-muted">
-          Waiting for the rider to collect this order.
+          {rider ? `${rider.firstName} is coming to collect this order.` : "Waiting for the rider to collect this order."}
         </Card>
       )}
     </div>
