@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Award,
   Users,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
@@ -25,6 +26,7 @@ interface Vendor {
   phone: string;
   address: string;
   description?: string;
+  logoUrl?: string;
   isOpen: boolean;
   isApproved: boolean;
   status: "pending" | "approved" | "rejected" | "suspended";
@@ -78,7 +80,7 @@ export default function SettingsPage() {
   if (loading) return <SettingsSkeleton />;
   if (!vendor) {
     return (
-      <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
+      <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">
         {error ?? "Vendor not found."}
       </p>
     );
@@ -86,19 +88,27 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-lg space-y-5">
-      <h1 className="text-xl font-bold text-ink">Store Settings</h1>
+      <Link href="/dashboard/more" className="inline-flex items-center gap-2 text-ink">
+        <ChevronLeft size={22} />
+        <span className="text-lg font-bold">Settings</span>
+      </Link>
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
 
       <Card className="flex items-center gap-3 p-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-light text-xl">
-          🍽️
-        </div>
+        {vendor.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={vendor.logoUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+        ) : (
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-light text-lg font-bold text-brand-dark">
+            {vendor.businessName.charAt(0).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0">
-          <p className="truncate font-semibold text-ink">{vendor.businessName}</p>
-          <Link href="/dashboard/settings/profile" className="text-xs font-medium text-brand-dark">
+          <p className="truncate font-bold text-ink">{vendor.businessName}</p>
+          <Link href="/dashboard/settings/profile" className="text-xs font-semibold text-brand-dark">
             Edit profile
           </Link>
         </div>
@@ -141,20 +151,22 @@ export default function SettingsPage() {
 
       <Card className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
-            <Power size={16} />
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+            <Power size={18} />
           </span>
           <div>
             <p className="font-semibold text-ink">Store Status</p>
-            <p className="text-xs text-ink-muted">{vendor.isOpen ? "Open — accepting orders" : "Closed"}</p>
+            <p className="text-xs text-ink-muted">
+              {vendor.isOpen ? "Open, accepting orders" : "Closed"}
+            </p>
           </div>
         </div>
         <button
           onClick={toggleOpen}
           disabled={saving || !isVendorApproved(vendor)}
           title={!isVendorApproved(vendor) ? "Your store must be approved before it can open." : undefined}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold disabled:opacity-50 ${
-            vendor.isOpen ? "bg-status-success-bg text-status-success" : "bg-surface-border text-ink-muted"
+          className={`rounded-full px-4 py-2 text-xs font-bold disabled:opacity-50 ${
+            vendor.isOpen ? "bg-status-success-bg text-status-success" : "bg-surface-muted text-ink-muted"
           }`}
         >
           {saving ? "Updating..." : vendor.isOpen ? "Open" : "Closed"}
@@ -177,8 +189,8 @@ function SettingsRow({
 }) {
   return (
     <Link href={href} className="flex items-center gap-3 p-4">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
-        <Icon size={16} />
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+        <Icon size={18} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-ink">{label}</p>
@@ -200,12 +212,14 @@ function ComingSoonRow({
 }) {
   return (
     <div className="flex items-center gap-3 p-4 opacity-50">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-border text-ink-faint">
-        <Icon size={16} />
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-ink-faint">
+        <Icon size={18} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-ink">{label}</p>
-        <p className="text-xs text-ink-muted">{hint} — coming soon</p>
+        <p className="text-xs text-ink-muted">
+          {hint} {"\u2022"} coming soon
+        </p>
       </div>
     </div>
   );

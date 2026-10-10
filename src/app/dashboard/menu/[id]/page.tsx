@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Trash2 } from "lucide-react";
+import { ChevronLeft, Trash2, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -143,8 +143,9 @@ export default function ProductDetailPage() {
   };
 
   const back = (
-    <button onClick={() => router.back()} className="inline-flex items-center gap-1 text-sm text-ink-muted">
-      <ChevronLeft size={16} /> Back to products
+    <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-ink">
+      <ChevronLeft size={22} />
+      <span className="text-lg font-bold">Product</span>
     </button>
   );
 
@@ -166,18 +167,19 @@ export default function ProductDetailPage() {
       {back}
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
 
       {product.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={product.imageUrl}
           alt={product.name}
           className="h-56 w-full rounded-2xl object-cover"
         />
       ) : (
-        <div className="flex h-56 w-full items-center justify-center rounded-2xl bg-brand-light text-4xl">
-          {"\uD83C\uDF7D\uFE0F"}
+        <div className="flex h-56 w-full items-center justify-center rounded-2xl bg-brand-light text-brand-dark">
+          <Package size={40} />
         </div>
       )}
 
@@ -187,11 +189,11 @@ export default function ProductDetailPage() {
           <button
             onClick={toggleStock}
             disabled={busy}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold ${
               product.inStock ? "bg-status-success-bg text-status-success" : "bg-status-danger-bg text-status-danger"
             }`}
           >
-            {product.inStock ? "Available" : "Out of Stock"}
+            {product.inStock ? "In Stock" : "Out of Stock"}
           </button>
         </div>
         <p className="mt-1 text-lg font-bold text-ink">
@@ -208,7 +210,7 @@ export default function ProductDetailPage() {
                 maxLength={40}
                 autoFocus
                 placeholder="e.g. Rice Dishes"
-                className="min-w-0 flex-1 rounded-xl border border-surface-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
+                className="min-w-0 flex-1 rounded-xl border border-surface-border bg-white px-3 py-3 text-sm text-ink outline-none focus:border-brand"
                 value={sectionDraft}
                 onChange={(e) => setSectionDraft(e.target.value)}
               />
@@ -220,14 +222,14 @@ export default function ProductDetailPage() {
               <button
                 onClick={saveSection}
                 disabled={busy}
-                className="rounded-xl bg-brand px-3 text-sm font-semibold text-brand-ink disabled:opacity-60"
+                className="rounded-xl bg-brand px-4 text-sm font-bold text-brand-ink disabled:opacity-60"
               >
                 Save
               </button>
               <button
                 onClick={() => setEditingSection(false)}
                 disabled={busy}
-                className="rounded-xl border border-surface-border px-3 text-sm font-semibold text-ink"
+                className="rounded-xl border border-surface-border px-4 text-sm font-semibold text-ink"
               >
                 Cancel
               </button>
@@ -238,7 +240,7 @@ export default function ProductDetailPage() {
                 setSectionDraft(product.section ?? "");
                 setEditingSection(true);
               }}
-              className="inline-block rounded-full bg-surface-border px-2.5 py-1 text-xs font-medium text-ink-muted"
+              className="inline-block rounded-full border border-surface-border bg-white px-3.5 py-2 text-xs font-semibold text-ink-muted"
             >
               {product.section ? `Menu section: ${product.section}` : "+ Add menu section"}
             </button>
@@ -249,14 +251,14 @@ export default function ProductDetailPage() {
       {/* Options and extras */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-ink">Options and extras</p>
+          <p className="text-sm font-bold text-ink">Options and extras</p>
           {!editingOptions && (
             <button
               onClick={() => {
                 setOptionDrafts(toDrafts(product.optionGroups));
                 setEditingOptions(true);
               }}
-              className="text-xs font-semibold text-brand-dark"
+              className="px-1 py-2 text-xs font-semibold text-brand-dark"
             >
               {groups.length > 0 ? "Edit options" : "+ Add options"}
             </button>
@@ -274,14 +276,14 @@ export default function ProductDetailPage() {
               <button
                 onClick={saveOptions}
                 disabled={busy || uploadingOptions}
-                className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-brand-ink disabled:opacity-60"
+                className="flex-1 rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-60"
               >
                 {uploadingOptions ? "Uploading photo..." : busy ? "Saving..." : "Save options"}
               </button>
               <button
                 onClick={() => setEditingOptions(false)}
                 disabled={busy}
-                className="rounded-xl border border-surface-border px-4 text-sm font-semibold text-ink"
+                className="rounded-xl border border-surface-border px-5 text-sm font-semibold text-ink"
               >
                 Cancel
               </button>
@@ -308,8 +310,8 @@ export default function ProductDetailPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={c.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
                     ) : (
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-light">
-                        {"\uD83C\uDF7D\uFE0F"}
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-light text-brand-dark">
+                        <Package size={16} />
                       </span>
                     )}
                     <span className="flex-1">
@@ -350,7 +352,7 @@ export default function ProductDetailPage() {
       <button
         onClick={handleDelete}
         disabled={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-status-danger py-3 font-semibold text-status-danger disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-status-danger bg-white py-3.5 text-sm font-bold text-status-danger disabled:opacity-60"
       >
         <Trash2 size={16} /> Delete product
       </button>

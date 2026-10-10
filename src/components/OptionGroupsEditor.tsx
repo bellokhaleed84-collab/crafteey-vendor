@@ -98,7 +98,7 @@ export function validateDrafts(drafts: GroupDraft[]): string | null {
 }
 
 const FIELD =
-  "rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-sm text-ink outline-none focus:border-brand";
+  "rounded-xl border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
 
 export default function OptionGroupsEditor({
   value,
@@ -173,7 +173,7 @@ export default function OptionGroupsEditor({
           <div className="flex items-center gap-2">
             <input
               placeholder="Group name (e.g. Extras, Portion)"
-              className={"flex-1 " + FIELD}
+              className={"min-w-0 flex-1 " + FIELD}
               value={g.name}
               maxLength={40}
               onChange={(e) => patchGroup(gi, { name: e.target.value })}
@@ -182,23 +182,29 @@ export default function OptionGroupsEditor({
               type="button"
               onClick={() => removeGroup(gi)}
               aria-label="Remove group"
-              className="text-ink-faint"
+              className="flex h-10 w-10 shrink-0 items-center justify-center text-ink-faint"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-4 text-xs text-ink">
-            <label className="flex items-center gap-1.5">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-ink">
+            <label className="flex items-center gap-2 py-1">
               <input
                 type="checkbox"
+                className="h-4 w-4 accent-[#FFC800]"
                 checked={g.required}
                 onChange={(e) => patchGroup(gi, { required: e.target.checked })}
               />
               Customer must choose
             </label>
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={g.single} onChange={(e) => setSingle(gi, e.target.checked)} />
+            <label className="flex items-center gap-2 py-1">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#FFC800]"
+                checked={g.single}
+                onChange={(e) => setSingle(gi, e.target.checked)}
+              />
               Pick only one
             </label>
           </div>
@@ -211,7 +217,7 @@ export default function OptionGroupsEditor({
                     type="button"
                     onClick={() => setPhotoOpen((p) => ({ ...p, [c.id]: !p[c.id] }))}
                     aria-label="Choice photo"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-surface-border text-xs text-ink-faint"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-surface-border text-[10px] font-medium text-ink-faint"
                   >
                     {c.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -251,9 +257,9 @@ export default function OptionGroupsEditor({
                     type="button"
                     onClick={() => removeChoice(gi, ci)}
                     aria-label="Remove choice"
-                    className="text-ink-faint"
+                    className="flex h-10 w-8 shrink-0 items-center justify-center text-ink-faint"
                   >
-                    <X size={14} />
+                    <X size={16} />
                   </button>
                 </div>
 
@@ -277,7 +283,7 @@ export default function OptionGroupsEditor({
             <button
               type="button"
               onClick={() => addChoice(gi)}
-              className="text-xs font-medium text-brand-dark"
+              className="py-1 text-xs font-bold text-brand-dark"
             >
               + Add choice
             </button>
@@ -285,18 +291,18 @@ export default function OptionGroupsEditor({
         </Card>
       ))}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col gap-1">
         <button
           type="button"
           onClick={() => addGroup("extras")}
-          className="flex items-center gap-1 text-xs font-semibold text-brand-dark"
+          className="flex items-center gap-1.5 py-2 text-xs font-bold text-brand-dark"
         >
           <Plus size={14} /> Add extras (like beef, plantain)
         </button>
         <button
           type="button"
           onClick={() => addGroup("must")}
-          className="flex items-center gap-1 text-xs font-semibold text-brand-dark"
+          className="flex items-center gap-1.5 py-2 text-xs font-bold text-brand-dark"
         >
           <Plus size={14} /> Add a must-choose option (like portion size)
         </button>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -77,41 +77,39 @@ export default function OpeningHoursPage() {
   }
 
   const field =
-    "w-full rounded-xl border border-surface-border bg-white px-4 py-3 text-sm text-ink outline-none";
+    "w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none focus:border-brand";
 
   return (
     <div className="max-w-lg space-y-5">
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard/settings" aria-label="Back to settings" className="text-ink">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-xl font-bold text-ink">Opening Hours</h1>
-      </div>
+      <Link href="/dashboard/settings" aria-label="Back to settings" className="inline-flex items-center gap-2 text-ink">
+        <ChevronLeft size={22} />
+        <span className="text-lg font-bold">Opening Hours</span>
+      </Link>
 
       <p className="text-sm text-ink-muted">
         Customers see these times on your store page. They are for information only. To stop taking orders, use the
         Store Status switch in Settings.
       </p>
 
-      {error && <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>}
+      {error && <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>}
       {saved && (
-        <p className="rounded-lg bg-status-success-bg p-2 text-sm text-status-success">Your hours have been saved.</p>
+        <p className="rounded-xl bg-status-success-bg p-3 text-sm text-status-success">Your hours have been saved.</p>
       )}
 
       <Card className="space-y-4 p-4">
-        <label className="block space-y-1">
-          <span className="text-xs font-semibold text-ink-muted">Opens at</span>
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-ink">Opens at</span>
           <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} className={field} />
         </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-semibold text-ink-muted">Closes at</span>
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-ink">Closes at</span>
           <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} className={field} />
         </label>
         <button
           type="button"
           onClick={save}
           disabled={saving}
-          className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-ink disabled:opacity-60"
+          className="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save hours"}
         </button>

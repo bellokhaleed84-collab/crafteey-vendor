@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { ORDERS_REFRESH_EVENT } from "@/components/PushRegistrar";
@@ -43,7 +44,7 @@ const STAGE_BADGE: Record<Order["stage"], string> = {
   cancelled: "bg-status-cancelled-bg text-status-cancelled",
 };
 
-type FilterKey = "all" | "new" | "preparing" | "ready";
+type FilterKey = "all" | "new" | "preparing" | "ready" | "delivered";
 
 const POLL_MS = 15000;
 
@@ -98,6 +99,7 @@ export default function OrdersPage() {
     { key: "new", label: "New", count: count("new") },
     { key: "preparing", label: "Preparing", count: count("preparing") },
     { key: "ready", label: "Ready", count: count("ready") },
+    { key: "delivered", label: "Delivered", count: count("delivered") },
   ];
 
   const filtered = filter === "all" ? orders : orders.filter((o) => o.stage === filter);
@@ -106,13 +108,15 @@ export default function OrdersPage() {
     <div className="space-y-5">
       <h1 className="text-xl font-bold text-ink">Orders</h1>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-              filter === f.key ? "bg-brand text-brand-ink" : "bg-surface-border text-ink-muted"
+            className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${
+              filter === f.key
+                ? "border-brand bg-brand text-brand-ink"
+                : "border-surface-border bg-white text-ink-muted"
             }`}
           >
             {f.label} ({f.count})
@@ -121,7 +125,7 @@ export default function OrdersPage() {
       </div>
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
 
       {loading ? (
@@ -134,28 +138,40 @@ export default function OrdersPage() {
             const itemCount = o.items.reduce((sum, i) => sum + i.quantity, 0);
             const summary = o.items.map(itemSummary).join(", ");
             return (
-              <Link key={o._id} href={`/dashboard/orders/${o._id}`}>
-                <Card className="p-4 transition hover:border-brand/40 hover:shadow-md">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-ink">{o.orderNumber}</p>
-                      <p className="line-clamp-2 text-sm text-ink-muted">{summary}</p>
+              <Card key={o._id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+                    <ClipboardList size={20} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold text-ink">{o.orderNumber}</p>
+                      <span className="shrink-0 text-xs text-ink-faint">{timeOf(o.placedAt)}</span>
                     </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STAGE_BADGE[o.stage]}`}
-                    >
-                      {STAGE_LABELS[o.stage]}
-                    </span>
+                    <p className="line-clamp-1 text-xs text-ink-muted">{summary}</p>
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-ink">
+                        {"\u20A6"}
+                        {o.subtotal.toLocaleString()}
+                        <span className="ml-1.5 text-xs font-normal text-ink-faint">
+                          {itemCount} item{itemCount === 1 ? "" : "s"}
+                        </span>
+                      </p>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STAGE_BADGE[o.stage]}`}
+                      >
+                        {STAGE_LABELS[o.stage]}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-ink-muted">
-                      {itemCount} item{itemCount === 1 ? "" : "s"} {"\u2022"} {"\u20A6"}
-                      {o.subtotal.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-ink-faint">{timeOf(o.placedAt)}</span>
-                  </div>
-                </Card>
-              </Link>
+                </div>
+                <Link
+                  href={`/dashboard/orders/${o._id}`}
+                  className="mt-3 block rounded-xl border border-brand py-2.5 text-center text-xs font-bold text-brand-dark"
+                >
+                  View Details
+                </Link>
+              </Card>
             );
           })}
         </div>
@@ -169,17 +185,15 @@ function OrdersSkeleton() {
     <div className="space-y-3">
       {[0, 1, 2, 3].map((i) => (
         <Card key={i} className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1.5">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3.5 w-40" />
               <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-3.5 w-28" />
             </div>
-            <Skeleton className="h-5 w-20 rounded-full" />
           </div>
-          <div className="mt-2 flex justify-between">
-            <Skeleton className="h-3.5 w-32" />
-            <Skeleton className="h-3.5 w-12" />
-          </div>
+          <Skeleton className="mt-3 h-10 w-full rounded-xl" />
         </Card>
       ))}
     </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -67,7 +67,7 @@ export default function StoreInformationPage() {
   if (loading) return <ProfileSkeleton />;
   if (!vendor) {
     return (
-      <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
+      <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">
         {error ?? "Vendor not found."}
       </p>
     );
@@ -75,20 +75,18 @@ export default function StoreInformationPage() {
 
   return (
     <div className="max-w-lg space-y-5">
-      <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} aria-label="Back" className="text-ink-muted">
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-lg font-bold text-ink">Store Information</h1>
-      </div>
+      <button onClick={() => router.back()} aria-label="Back" className="inline-flex items-center gap-2 text-ink">
+        <ChevronLeft size={22} />
+        <span className="text-lg font-bold">Store Information</span>
+      </button>
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
 
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-ink">Store logo</label>
+          <label className="mb-1 block text-xs font-semibold text-ink">Store logo</label>
           <p className="mb-2 text-xs text-ink-muted">Shown on your store in the Crafteey Hub.</p>
           <ImageUpload kind="logo" value={vendor.logoUrl || ""} onChange={handleLogoChange} />
         </div>
@@ -147,13 +145,13 @@ function EditableField({
 
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
+      <label className="mb-1 block text-xs font-semibold text-ink">{label}</label>
       {hint && <p className="mb-1 text-xs text-ink-muted">{hint}</p>}
       {editing ? (
         <div className="space-y-2">
           <div className="flex gap-2">
             <input
-              className="flex-1 rounded-xl border border-surface-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand"
+              className="min-w-0 flex-1 rounded-xl border border-surface-border bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               autoFocus
@@ -161,14 +159,14 @@ function EditableField({
             <button
               onClick={commit}
               disabled={busy}
-              className="rounded-xl bg-brand px-3 text-sm font-semibold text-brand-ink disabled:opacity-60"
+              className="rounded-xl bg-brand px-4 text-sm font-bold text-brand-ink disabled:opacity-60"
             >
               {busy ? "Saving..." : "Save"}
             </button>
             <button
               onClick={() => setEditing(false)}
               disabled={busy}
-              className="rounded-xl border border-surface-border px-3 text-sm font-semibold text-ink"
+              className="rounded-xl border border-surface-border px-4 text-sm font-semibold text-ink"
             >
               Cancel
             </button>
@@ -176,8 +174,11 @@ function EditableField({
           {fieldError && <p className="text-xs text-status-danger">{fieldError}</p>}
         </div>
       ) : (
-        <Card onClick={startEdit} className="cursor-pointer px-3 py-2.5 text-ink">
-          {value || <span className="text-ink-faint">Not set</span>}
+        <Card onClick={startEdit} className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-sm text-ink">
+          <span className="min-w-0 flex-1 break-words">
+            {value || <span className="text-ink-faint">Not set</span>}
+          </span>
+          <Pencil size={14} className="shrink-0 text-ink-faint" />
         </Card>
       )}
     </div>

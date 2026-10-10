@@ -136,8 +136,9 @@ export default function OrderDetailPage() {
   };
 
   const back = (
-    <Link href="/dashboard/orders" className="inline-flex items-center gap-1 text-sm text-ink-muted">
-      <ChevronLeft size={16} /> Back to orders
+    <Link href="/dashboard/orders" className="inline-flex items-center gap-2 text-ink">
+      <ChevronLeft size={22} />
+      <span className="text-lg font-bold">Order Details</span>
     </Link>
   );
 
@@ -148,7 +149,7 @@ export default function OrderDetailPage() {
       <div className="max-w-lg space-y-4">
         {back}
         {loadError ? (
-          <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{loadError}</p>
+          <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{loadError}</p>
         ) : (
           <p className="text-sm text-ink-muted">Order not found.</p>
         )}
@@ -165,31 +166,30 @@ export default function OrderDetailPage() {
       {back}
 
       {loadError && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{loadError}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{loadError}</p>
       )}
 
-      <Card className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold text-ink">{order.orderNumber}</h1>
-            <p className="text-sm text-ink-muted">
-              Placed{" "}
-              {new Date(order.placedAt).toLocaleString(undefined, {
-                day: "numeric",
-                month: "short",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STAGE_BADGE[order.stage]}`}>
-            {STAGE_LABELS[order.stage]}
-          </span>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-ink">{order.orderNumber}</h1>
+          <p className="text-xs text-ink-muted">
+            Placed{" "}
+            {new Date(order.placedAt).toLocaleString(undefined, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </p>
         </div>
-      </Card>
+        <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${STAGE_BADGE[order.stage]}`}>
+          {STAGE_LABELS[order.stage]}
+        </span>
+      </div>
 
       {cancelled ? (
-        <Card className="bg-surface-muted p-3 text-sm text-ink-muted">This order was cancelled.</Card>
+        <Card className="bg-surface-muted p-4 text-sm text-ink-muted">This order was cancelled.</Card>
       ) : (
         <Card className="p-4">
           <ol className="space-y-3">
@@ -220,88 +220,92 @@ export default function OrderDetailPage() {
         </Card>
       )}
 
-      <Card className="divide-y divide-surface-border">
-        {order.items.map((item, idx) => {
-          const groups = groupOptions(item.options ?? []);
-          return (
-            <div key={idx} className="p-3 text-sm">
-              <div className="flex justify-between">
-                <span className="font-medium text-ink">
-                  {item.quantity}x {item.name}
-                </span>
-                <span className="text-ink">
-                  {"\u20A6"}
-                  {(item.unitPrice * item.quantity).toLocaleString()}
-                </span>
-              </div>
-
-              {groups.length > 0 && (
-                <div className="mt-2 space-y-1.5 rounded-lg bg-surface-muted p-2.5">
-                  {item.quantity > 1 && (
-                    <p className="text-xs font-semibold text-ink">Each plate:</p>
-                  )}
-                  {groups.map((g) => (
-                    <div key={g.name} className="text-ink-muted">
-                      <span className="text-xs font-medium uppercase tracking-wide text-ink-faint">
-                        {g.name}
-                      </span>
-                      <div className="mt-0.5 space-y-1">
-                        {g.items.map((o, oi) => (
-                          <div key={oi} className="flex items-center gap-2">
-                            {o.imageUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={o.imageUrl}
-                                alt=""
-                                className="h-8 w-8 shrink-0 rounded-md object-cover"
-                              />
-                            ) : null}
-                            <span className="text-ink">
-                              {o.quantity > 1 ? `${o.quantity} \u00D7 ` : ""}
-                              {o.choiceName}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+      <div>
+        <h2 className="mb-2 text-sm font-bold text-ink">Order Items</h2>
+        <Card className="divide-y divide-surface-border">
+          {order.items.map((item, idx) => {
+            const groups = groupOptions(item.options ?? []);
+            return (
+              <div key={idx} className="p-3.5 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="font-medium text-ink">
+                    {item.name}
+                    <span className="ml-2 text-xs text-ink-muted">x{item.quantity}</span>
+                  </span>
+                  <span className="shrink-0 text-ink">
+                    {"\u20A6"}
+                    {(item.unitPrice * item.quantity).toLocaleString()}
+                  </span>
                 </div>
-              )}
-            </div>
-          );
-        })}
-        <div className="flex justify-between p-3 text-sm text-ink-muted">
-          <span>Items subtotal</span>
-          <span>
-            {"\u20A6"}
-            {order.subtotal.toLocaleString()}
-          </span>
-        </div>
-        {!cancelled && role === "owner" && order.vendorPayout !== undefined && (
-          <div className="flex justify-between p-3 font-semibold text-ink">
-            <span>Your payout</span>
+
+                {groups.length > 0 && (
+                  <div className="mt-2 space-y-1.5 rounded-xl bg-surface-muted p-2.5">
+                    {item.quantity > 1 && (
+                      <p className="text-xs font-semibold text-ink">Each plate:</p>
+                    )}
+                    {groups.map((g) => (
+                      <div key={g.name} className="text-ink-muted">
+                        <span className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                          {g.name}
+                        </span>
+                        <div className="mt-0.5 space-y-1">
+                          {g.items.map((o, oi) => (
+                            <div key={oi} className="flex items-center gap-2">
+                              {o.imageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={o.imageUrl}
+                                  alt=""
+                                  className="h-8 w-8 shrink-0 rounded-md object-cover"
+                                />
+                              ) : null}
+                              <span className="text-ink">
+                                {o.quantity > 1 ? `${o.quantity} \u00D7 ` : ""}
+                                {o.choiceName}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          <div className="flex justify-between p-3.5 text-sm text-ink-muted">
+            <span>Items subtotal</span>
             <span>
               {"\u20A6"}
-              {order.vendorPayout.toLocaleString()}
+              {order.subtotal.toLocaleString()}
             </span>
           </div>
-        )}
-      </Card>
+          {!cancelled && role === "owner" && order.vendorPayout !== undefined && (
+            <div className="flex justify-between p-3.5 text-base font-bold text-ink">
+              <span>Your payout</span>
+              <span>
+                {"\u20A6"}
+                {order.vendorPayout.toLocaleString()}
+              </span>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {actionError && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{actionError}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{actionError}</p>
       )}
 
       {actions.length > 0 && (
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3">
           {actions.map((a) => (
             <button
               key={a.action}
               onClick={() => runAction(a.action)}
               disabled={updating}
-              className={`flex-1 rounded-xl py-3 font-semibold transition disabled:opacity-60 ${
+              className={`w-full rounded-xl py-3.5 text-sm font-bold transition disabled:opacity-60 ${
                 a.action === "reject"
-                  ? "border border-status-danger text-status-danger"
+                  ? "border border-status-danger bg-white text-status-danger"
                   : "bg-brand text-brand-ink"
               }`}
             >
@@ -312,7 +316,7 @@ export default function OrderDetailPage() {
       )}
 
       {order.stage === "ready" && (
-        <Card className="bg-surface-muted p-3 text-sm text-ink-muted">
+        <Card className="bg-surface-muted p-4 text-sm text-ink-muted">
           Waiting for the rider to collect this order.
         </Card>
       )}
@@ -324,18 +328,19 @@ function OrderDetailSkeleton({ back }: { back: React.ReactNode }) {
   return (
     <div className="max-w-lg space-y-5">
       {back}
-      <Card className="p-4">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="mt-2 h-3.5 w-56" />
-      </Card>
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-3.5 w-48" />
+        </div>
+        <Skeleton className="h-7 w-24 rounded-full" />
+      </div>
       <Card className="space-y-3 p-4">
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
       </Card>
-      <Card className="p-4">
-        <Skeleton className="h-10 w-full" />
-      </Card>
+      <Skeleton className="h-12 w-full rounded-xl" />
     </div>
   );
 }

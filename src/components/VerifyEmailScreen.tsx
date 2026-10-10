@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendlyAuthError } from "@/lib/authErrors";
 
@@ -48,19 +49,21 @@ export default function VerifyEmailScreen({ onChecked }: { onChecked: () => void
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-surface-muted px-6">
+    <main className="flex min-h-screen items-center justify-center bg-white px-6">
       <div className="w-full max-w-sm space-y-4 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-2xl">✉️</div>
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-light text-brand-dark">
+          <Mail size={28} />
+        </div>
         <h1 className="text-xl font-bold text-ink">Verify your email</h1>
         <p className="text-sm text-ink-muted">
           We sent a link to <span className="font-semibold text-ink">{user?.email}</span>. Tap it, then come back
           here. This confirms the email really is yours, so only you can open your store&apos;s orders.
         </p>
 
-        {error && <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>}
-        {notice && <p className="rounded-lg bg-status-success-bg p-2 text-sm text-status-success">{notice}</p>}
+        {error && <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>}
+        {notice && <p className="rounded-xl bg-status-success-bg p-3 text-sm text-status-success">{notice}</p>}
         {checked && !emailVerified && !busy && (
-          <p className="rounded-lg bg-status-warning-bg p-2 text-sm text-status-warning">
+          <p className="rounded-xl bg-status-warning-bg p-3 text-sm text-status-warning">
             We can&apos;t see your verification yet. Tap the link in the email, then try again.
           </p>
         )}
@@ -69,7 +72,7 @@ export default function VerifyEmailScreen({ onChecked }: { onChecked: () => void
           type="button"
           onClick={check}
           disabled={busy}
-          className="w-full rounded-xl bg-brand py-3 font-semibold text-brand-ink disabled:opacity-60"
+          className="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-60"
         >
           {busy ? "Checking..." : "I've verified my email"}
         </button>
@@ -77,11 +80,11 @@ export default function VerifyEmailScreen({ onChecked }: { onChecked: () => void
           type="button"
           onClick={resend}
           disabled={busy}
-          className="w-full rounded-xl border border-surface-border py-3 text-sm font-semibold text-ink disabled:opacity-60"
+          className="w-full rounded-xl border border-surface-border bg-white py-3.5 text-sm font-semibold text-ink disabled:opacity-60"
         >
           Send the email again
         </button>
-        <button type="button" onClick={leave} className="text-xs font-medium text-ink-muted underline">
+        <button type="button" onClick={leave} className="px-4 py-3 text-xs font-semibold text-ink-muted underline">
           Log out
         </button>
       </div>

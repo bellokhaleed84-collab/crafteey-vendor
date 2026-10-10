@@ -4,7 +4,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1a1a;
 }
 
 body {
@@ -21,7 +21,7 @@ body {
   background-image: linear-gradient(
     90deg,
     theme("colors.surface.border") 0%,
-    #f6f3f4 50%,
+    #f6f7f9 50%,
     theme("colors.surface.border") 100%
   );
   background-size: 800px 100%;

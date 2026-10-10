@@ -20,14 +20,14 @@ export default function TierCard({
       onClick={onSelect}
       disabled={disabled}
       className={`w-full rounded-2xl border-2 p-4 text-left disabled:opacity-60 ${
-        selected ? "border-brand bg-brand-light" : "border-surface-border bg-surface"
+        selected ? "border-brand bg-brand-light" : "border-surface-border bg-white"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
-          <span className="font-semibold text-ink">{info.label}</span>
+          <span className="font-bold text-ink">{info.label}</span>
           {badge && (
-            <span className="rounded-full bg-surface-border px-2 py-0.5 text-[10px] font-semibold text-ink-muted">
+            <span className="rounded-full bg-surface-muted px-2.5 py-1 text-[10px] font-semibold text-ink-muted">
               {badge}
             </span>
           )}

@@ -10,20 +10,25 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: "#F5C518",
+          DEFAULT: "#FFC800",
           dark: "#D9A400",
-          light: "#FFF6DA",
+          light: "#FFF6D6",
           ink: "#1A1A1A"
         },
+        navy: {
+          DEFAULT: "#1C1566",
+          soft: "#2A2080"
+        },
+        promo: "#5B21B6",
         ink: {
           DEFAULT: "#1A1A1A",
-          muted: "#6B6570",
-          faint: "#A39FA6"
+          muted: "#6B7280",
+          faint: "#9CA3AF"
         },
         surface: {
           DEFAULT: "#FFFFFF",
-          muted: "#FBF9F4",
-          border: "#EFEAE0"
+          muted: "#F7F8FA",
+          border: "#E9ECF0"
         },
         status: {
           success: "#16A34A",
@@ -38,7 +43,7 @@ const config: Config = {
           "new-bg": "#EFF6FF",
           preparing: "#D97706",
           "preparing-bg": "#FFF7ED",
-          ready: "#F5C518",
+          ready: "#B45309",
           "ready-bg": "#FFFBEB",
           delivered: "#16A34A",
           "delivered-bg": "#ECFDF3",
@@ -47,7 +52,7 @@ const config: Config = {
         }
       },
       boxShadow: {
-        card: "0 1px 2px rgba(21,19,21,0.04), 0 1px 3px rgba(21,19,21,0.06)"
+        card: "0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06)"
       }
     }
   },

@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Clock, XCircle, Ban, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyVendor, type VendorProfile } from "@/lib/vendorApi";
 import { fetchMyStaffAccess } from "@/lib/staffApi";
 import { isVendorApproved } from "@/lib/vendorApproval";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function PendingPage() {
   const { user, loading: authLoading, getToken, signOut } = useAuth();
@@ -62,78 +64,97 @@ export default function PendingPage() {
 
   const status = vendor?.status;
 
+  let icon = <Clock size={30} />;
+  let iconBox = "bg-brand-light text-brand-dark";
+  if (missing) {
+    icon = <Store size={30} />;
+  } else if (status === "rejected") {
+    icon = <XCircle size={30} />;
+    iconBox = "bg-status-danger-bg text-status-danger";
+  } else if (status === "suspended") {
+    icon = <Ban size={30} />;
+    iconBox = "bg-status-danger-bg text-status-danger";
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
+    <main className="flex min-h-screen items-center justify-center bg-white px-6">
       <div className="w-full max-w-sm space-y-4 text-center">
         {checking && !vendor && !missing ? (
-          <p className="text-sm text-gray-600">Checking your application…</p>
-        ) : missing ? (
-          <>
-            <h1 className="text-2xl font-bold">No store found</h1>
-            <p className="text-sm text-gray-600">
-              This account isn&apos;t linked to a store yet.
-            </p>
-            {user?.email && (
-              <p className="text-sm text-gray-600">
-                Signed in as <b className="break-all">{user.email}</b>
-              </p>
-            )}
-            <p className="text-sm text-gray-600">
-              <b>Staff:</b> ask your store owner to add this exact email in Settings → Staff, then
-              tap Check again.
-            </p>
-            <p className="text-sm text-gray-600">
-              <b>Store owner:</b>{" "}
-              <Link href="/register" className="font-semibold underline">
-                register your store
-              </Link>
-              .
-            </p>
-          </>
-        ) : status === "rejected" ? (
-          <>
-            <h1 className="text-2xl font-bold">Application not approved</h1>
-            <p className="text-sm text-gray-600">
-              {vendor?.businessName} wasn&apos;t approved. Please contact
-              support if you think this is a mistake.
-            </p>
-          </>
-        ) : status === "suspended" ? (
-          <>
-            <h1 className="text-2xl font-bold">Store suspended</h1>
-            <p className="text-sm text-gray-600">
-              {vendor?.businessName} has been suspended. Please contact
-              support to find out why and how to get it reinstated.
-            </p>
-          </>
+          <div className="space-y-3">
+            <Skeleton className="mx-auto h-16 w-16 rounded-2xl" />
+            <Skeleton className="mx-auto h-6 w-56" />
+            <Skeleton className="h-16 w-full rounded-xl" />
+          </div>
         ) : (
           <>
-            <h1 className="text-2xl font-bold">Your store is under review</h1>
-            <p className="text-sm text-gray-600">
-              Thanks for registering{vendor ? `, ${vendor.businessName}` : ""}.
-              Our team is verifying your details. This page updates
-              automatically once you&apos;re approved.
-            </p>
+            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl ${iconBox}`}>
+              {icon}
+            </div>
+
+            {missing ? (
+              <>
+                <h1 className="text-2xl font-bold text-ink">No store found</h1>
+                <p className="text-sm text-ink-muted">This account isn&apos;t linked to a store yet.</p>
+                {user?.email && (
+                  <p className="text-sm text-ink-muted">
+                    Signed in as <b className="break-all text-ink">{user.email}</b>
+                  </p>
+                )}
+                <p className="text-sm text-ink-muted">
+                  <b className="text-ink">Staff:</b> ask your store owner to add this exact email in Settings {"\u2192"}{" "}
+                  Staff, then tap Check again.
+                </p>
+                <p className="text-sm text-ink-muted">
+                  <b className="text-ink">Store owner:</b>{" "}
+                  <Link href="/register" className="font-semibold text-brand-dark underline">
+                    register your store
+                  </Link>
+                  .
+                </p>
+              </>
+            ) : status === "rejected" ? (
+              <>
+                <h1 className="text-2xl font-bold text-ink">Application not approved</h1>
+                <p className="text-sm text-ink-muted">
+                  {vendor?.businessName} wasn&apos;t approved. Please contact support if you think this is a
+                  mistake.
+                </p>
+              </>
+            ) : status === "suspended" ? (
+              <>
+                <h1 className="text-2xl font-bold text-ink">Store suspended</h1>
+                <p className="text-sm text-ink-muted">
+                  {vendor?.businessName} has been suspended. Please contact support to find out why and how to get it
+                  reinstated.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-ink">Your store is under review</h1>
+                <p className="text-sm text-ink-muted">
+                  Thanks for registering{vendor ? `, ${vendor.businessName}` : ""}. Our team is verifying your
+                  details. This page updates automatically once you&apos;re approved.
+                </p>
+              </>
+            )}
           </>
         )}
 
-        {error && (
-          <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
-        )}
+        {error && <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>}
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <button
             onClick={() => {
               setChecking(true);
               load();
             }}
-            className="flex-1 border py-2 rounded-lg font-semibold"
+            className="flex-1 rounded-xl border border-surface-border bg-white py-3.5 text-sm font-semibold text-ink"
           >
             Check again
           </button>
           <button
             onClick={handleLogout}
-            className="flex-1 bg-brand text-white py-2 rounded-lg font-semibold"
+            className="flex-1 rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink"
           >
             Log out
           </button>

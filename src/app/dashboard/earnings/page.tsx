@@ -39,7 +39,7 @@ type TabKey = "overview" | "history";
 
 // Amounts come from the server in kobo.
 function naira(kobo: number): string {
-  return `₦${(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
+  return `\u20A6${(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
 export default function EarningsPage() {
@@ -70,7 +70,7 @@ export default function EarningsPage() {
 
   if (!data) {
     return (
-      <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
+      <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">
         {error ?? "Couldn't load your earnings."}
       </p>
     );
@@ -84,37 +84,39 @@ export default function EarningsPage() {
       <h1 className="text-xl font-bold text-ink">Earnings</h1>
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
 
-      <Card className="bg-brand p-5">
-        <p className="text-xs font-medium text-brand-ink/70">Net Earnings</p>
-        <p className="mt-1 text-2xl font-bold text-brand-ink">{naira(totals.earnedPayoutKobo)}</p>
-        <p className="mt-1 text-xs text-brand-ink/70">
+      <Card className="p-5">
+        <p className="text-xs text-ink-muted">Total Earnings</p>
+        <p className="mt-1 text-3xl font-bold text-ink">{naira(totals.earnedPayoutKobo)}</p>
+        <p className="mt-1 text-xs text-ink-faint">
           From {totals.earnedCount} delivered order{totals.earnedCount === 1 ? "" : "s"}
         </p>
       </Card>
 
-      {totals.pendingCount > 0 && (
-        <Card className="flex items-center justify-between bg-surface-muted p-4">
-          <div>
-            <p className="text-xs text-ink-muted">In progress</p>
-            <p className="text-xs text-ink-faint">
-              {totals.pendingCount} paid order{totals.pendingCount === 1 ? "" : "s"} not delivered yet
-            </p>
-          </div>
-          <p className="text-lg font-bold text-ink">{naira(totals.pendingPayoutKobo)}</p>
-        </Card>
-      )}
-
       <div className="grid grid-cols-2 gap-3">
+        <Card className="p-4">
+          <p className="text-xs text-ink-muted">Completed Orders</p>
+          <p className="mt-1 text-xl font-bold text-ink">{totals.earnedCount}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-ink-muted">Pending Payout</p>
+          <p className="mt-1 text-xl font-bold text-ink">{naira(totals.pendingPayoutKobo)}</p>
+          <p className="text-xs text-ink-faint">
+            {totals.pendingCount} order{totals.pendingCount === 1 ? "" : "s"} in progress
+          </p>
+        </Card>
         <Card className="p-4">
           <p className="text-xs text-ink-muted">Item sales</p>
           <p className="mt-1 text-lg font-bold text-ink">{naira(totals.earnedSalesKobo)}</p>
         </Card>
         <Card className="p-4">
           <p className="text-xs text-ink-muted">Crafteey commission</p>
-          <p className="mt-1 text-lg font-bold text-ink">−{naira(totals.earnedCommissionKobo)}</p>
+          <p className="mt-1 text-lg font-bold text-ink">
+            {"\u2212"}
+            {naira(totals.earnedCommissionKobo)}
+          </p>
         </Card>
         <Card className="p-4">
           <p className="text-xs text-ink-muted">Today</p>
@@ -137,8 +139,10 @@ export default function EarningsPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-              tab === t ? "bg-brand text-brand-ink" : "bg-surface-border text-ink-muted"
+            className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
+              tab === t
+                ? "border-brand bg-brand text-brand-ink"
+                : "border-surface-border bg-white text-ink-muted"
             }`}
           >
             {t === "overview" ? "Overview" : "Earnings History"}
@@ -158,20 +162,20 @@ export default function EarningsPage() {
             Earnings are your item sales minus Crafteey&apos;s commission. Delivery fees go to riders and are not
             part of your earnings.
           </p>
-          <p>Payout scheduling and a Payouts tab aren&apos;t built yet.</p>
+          <p>Wallet and withdrawals aren&apos;t built yet.</p>
         </Card>
       ) : (
         <div>
-          <h2 className="mb-2 text-sm font-semibold text-ink-muted">Delivered orders</h2>
+          <h2 className="mb-2 text-sm font-bold text-ink">Delivered orders</h2>
           {history.length === 0 ? (
             <p className="text-sm text-ink-muted">No delivered orders yet.</p>
           ) : (
             <>
               <Card className="divide-y divide-surface-border">
                 {history.map((o) => (
-                  <div key={o._id} className="flex items-center justify-between p-3 text-sm">
+                  <div key={o._id} className="flex items-center justify-between p-3.5 text-sm">
                     <div>
-                      <p className="font-medium text-ink">
+                      <p className="font-semibold text-ink">
                         #{o.orderNumber ?? o._id.slice(-6).toUpperCase()}
                       </p>
                       <p className="text-xs text-ink-faint">
@@ -179,7 +183,7 @@ export default function EarningsPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-ink">{naira(o.payoutKobo)}</p>
+                      <p className="font-bold text-status-success">+{naira(o.payoutKobo)}</p>
                       <p className="text-xs text-ink-faint">of {naira(o.subtotalKobo)}</p>
                     </div>
                   </div>
@@ -202,7 +206,7 @@ function EarningsSkeleton() {
   return (
     <div className="space-y-5">
       <Skeleton className="h-6 w-28" />
-      <Skeleton className="h-24 rounded-2xl" />
+      <Skeleton className="h-28 rounded-2xl" />
       <div className="grid grid-cols-2 gap-3">
         <Skeleton className="h-20 rounded-2xl" />
         <Skeleton className="h-20 rounded-2xl" />

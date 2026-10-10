@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell, TrendingUp } from "lucide-react";
+import { BadgeCheck, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -15,18 +15,38 @@ interface VendorSummary {
   isApproved: boolean;
 }
 
+interface OrderOption {
+  choiceName: string;
+  quantity: number;
+}
+
 interface OrderSummary {
-  stage: string;
+  _id: string;
+  orderNumber: string;
+  stage: "new" | "preparing" | "ready" | "picked_up" | "delivered" | "cancelled";
+  items: { name: string; quantity: number; options?: OrderOption[] }[];
   subtotal: number;
   vendorPayout: number;
   placedAt: string;
 }
 
-const STATUS_STYLES: Record<VendorSummary["status"], { label: string; bg: string; text: string }> = {
-  pending: { label: "Pending review", bg: "bg-status-warning-bg", text: "text-status-warning" },
-  approved: { label: "Approved", bg: "bg-status-success-bg", text: "text-status-success" },
-  rejected: { label: "Rejected", bg: "bg-status-danger-bg", text: "text-status-danger" },
-  suspended: { label: "Suspended", bg: "bg-status-danger-bg", text: "text-status-danger" },
+const STAGE_LABELS: Record<OrderSummary["stage"], string> = {
+  new: "New",
+  preparing: "Preparing",
+  ready: "Ready",
+  picked_up: "Picked up",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+// Full class names so Tailwind always generates them.
+const STAGE_BADGE: Record<OrderSummary["stage"], string> = {
+  new: "bg-status-new-bg text-status-new",
+  preparing: "bg-status-preparing-bg text-status-preparing",
+  ready: "bg-status-ready-bg text-status-ready",
+  picked_up: "bg-status-ready-bg text-status-ready",
+  delivered: "bg-status-delivered-bg text-status-delivered",
+  cancelled: "bg-status-cancelled-bg text-status-cancelled",
 };
 
 function isSameDay(iso: string, ref: Date): boolean {
@@ -38,32 +58,46 @@ function isSameDay(iso: string, ref: Date): boolean {
   );
 }
 
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good Morning,";
+  if (h < 17) return "Good Afternoon,";
+  return "Good Evening,";
+}
+
+function timeOf(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 export default function DashboardOverviewPage() {
   const { getToken } = useAuth();
   const [vendor, setVendor] = useState<VendorSummary | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [productCount, setProductCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoadError(null);
     try {
-      const [vendorRes, ordersRes] = await Promise.all([
+      const [vendorRes, ordersRes, productsRes] = await Promise.all([
         apiFetch(getToken, "/api/vendor/me"),
         apiFetch(getToken, "/api/orders"),
+        apiFetch(getToken, "/api/products"),
       ]);
       if (vendorRes.ok) {
         const data = await vendorRes.json();
         setVendor(data.vendor);
 
         // Best-effort: link this vendor into the client Hub if they're
-        // approved and not linked yet. Safe to call repeatedly — the route
+        // approved and not linked yet. Safe to call repeatedly: the route
         // is a no-op once a HubVendor already exists for this uid.
         if (data.vendor?.status === "approved" && data.vendor?.isApproved) {
           apiFetch(getToken, "/api/vendor/hub-link", { method: "POST" }).catch(() => {});
         }
       }
       if (ordersRes.ok) setOrders((await ordersRes.json()).orders ?? []);
+      if (productsRes.ok) setProductCount(((await productsRes.json()).products ?? []).length);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Couldn't load your dashboard.");
     } finally {
@@ -89,181 +123,106 @@ export default function DashboardOverviewPage() {
   const todaysSales = orders
     .filter((o) => o.stage === "delivered" && isSameDay(o.placedAt, today))
     .reduce((sum, o) => sum + o.subtotal, 0);
-
-  const newCount = orders.filter((o) => o.stage === "new").length;
-  const preparingCount = orders.filter((o) => o.stage === "preparing").length;
-  const readyCount = orders.filter((o) => o.stage === "ready").length;
-  const completedCount = orders.filter((o) => o.stage === "delivered").length;
-
-  const delivered = orders.filter((o) => o.stage === "delivered");
-  const deliveredTotal = delivered.reduce((sum, o) => sum + o.subtotal, 0);
-  // Real payout per order (tier-based, computed when the order was created)
-  const estBalance = delivered.reduce((sum, o) => sum + o.vendorPayout, 0);
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    return d;
-  });
-  const trend = days.map((d) => ({
-    label: d.toLocaleDateString(undefined, { weekday: "short" }),
-    value: delivered
-      .filter((o) => isSameDay(o.placedAt, d))
-      .reduce((sum, o) => sum + o.subtotal, 0),
-  }));
-  const maxTrend = Math.max(...trend.map((t) => t.value), 1);
-
-  const statusStyle = vendor ? STATUS_STYLES[vendor.status] : null;
+  const pendingCount = orders.filter((o) => o.stage === "new").length;
+  const recent = orders.slice(0, 4);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-black text-brand-ink">
-            C
-          </div>
-          <div>
-            <p className="text-sm font-bold leading-tight text-ink">Crafteey</p>
-            <p className="text-[11px] leading-tight text-ink-muted">Vendor</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            aria-label="Notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-surface-border bg-surface"
-          >
-            <Bell size={16} className="text-ink-muted" />
-          </button>
-          {vendor && (
-            <div className="flex items-center gap-2 rounded-full border border-surface-border bg-surface py-1 pl-1 pr-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-light text-xs font-bold text-brand-dark">
-                {vendor.businessName.charAt(0).toUpperCase()}
-              </span>
-              <span className="max-w-[90px] truncate text-xs font-medium text-ink">
-                {vendor.businessName}
-              </span>
-            </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-lg font-bold leading-tight text-ink">{greeting()}</p>
+          <p className="flex items-center gap-1.5 text-lg font-bold leading-tight text-ink">
+            <span className="truncate">{vendor?.businessName ?? "Your store"}</span>
+            {vendor?.isApproved && <BadgeCheck size={18} className="shrink-0 text-status-info" />}
+          </p>
+          {vendor?.isApproved && (
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-status-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-status-success" />
+              Verified Vendor
+            </p>
           )}
         </div>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-light text-base font-bold text-brand-dark">
+          {(vendor?.businessName ?? "C").charAt(0).toUpperCase()}
+        </span>
       </div>
-
-      <Card className="bg-brand p-4">
-        <p className="text-sm font-semibold text-brand-ink">
-          Good morning{vendor ? `, ${vendor.businessName.split(" ")[0]}` : ""}!
-        </p>
-        <p className="mt-0.5 text-xs text-brand-ink/70">
-          Here&apos;s what&apos;s happening with your store today
-        </p>
-        {statusStyle && (
-          <span
-            className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle.bg} ${statusStyle.text}`}
-          >
-            {statusStyle.label}
-          </span>
-        )}
-      </Card>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Total orders" value={orders.length} icon="🛒" />
-        <StatCard label="Total sales (delivered)" value={`₦${deliveredTotal.toLocaleString()}`} icon="₦" />
-        <StatCard label="Est. balance" value={`₦${Math.round(estBalance).toLocaleString()}`} icon="💳" />
-        <StatCard label="Today's sales" value={`₦${todaysSales.toLocaleString()}`} icon="📈" />
+        <StatCard label="Total Orders" value={String(orders.length)} />
+        <StatCard label="Today's Sales" value={`\u20A6${todaysSales.toLocaleString()}`} />
+        <StatCard label="Pending Orders" value={String(pendingCount)} />
+        <StatCard label="Total Products" value={String(productCount)} />
       </div>
 
-      <Card className="p-4">
+      <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink">Order status</h2>
-          <Link href="/dashboard/orders" className="text-xs font-medium text-brand-dark">
+          <h2 className="text-sm font-bold text-ink">Recent Orders</h2>
+          <Link href="/dashboard/orders" className="text-xs font-semibold text-brand-dark">
             View all
           </Link>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          <StatusPill label="New" value={newCount} accent="new" />
-          <StatusPill label="Preparing" value={preparingCount} accent="preparing" />
-          <StatusPill label="Ready" value={readyCount} accent="ready" />
-          <StatusPill label="Completed" value={completedCount} accent="delivered" />
-        </div>
-      </Card>
-
-      <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink">Sales, last 7 days</h2>
-          <TrendingUp size={16} className="text-status-success" />
-        </div>
-        <div className="flex h-24 items-end gap-2">
-          {trend.map((t) => (
-            <div key={t.label} className="flex flex-1 flex-col items-center gap-1">
-              <div
-                className="w-full rounded-t-md bg-brand"
-                style={{ height: `${Math.max((t.value / maxTrend) * 100, 4)}%` }}
-                title={`₦${t.value.toLocaleString()}`}
-              />
-              <span className="text-[10px] text-ink-faint">{t.label}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="bg-surface-muted p-4">
-        <p className="text-sm font-semibold text-ink">Crafteey Update</p>
-        <p className="mt-0.5 text-xs text-ink-muted">
-          Vendor announcements will appear here once that feature is built.
-        </p>
-      </Card>
+        {recent.length === 0 ? (
+          <Card className="p-4">
+            <p className="text-sm text-ink-muted">No orders yet. New orders will show up here.</p>
+          </Card>
+        ) : (
+          <Card className="divide-y divide-surface-border">
+            {recent.map((o) => (
+              <Link
+                key={o._id}
+                href={`/dashboard/orders/${o._id}`}
+                className="flex items-center gap-3 p-3.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-ink">{o.orderNumber}</p>
+                  <p className="text-xs text-ink-muted">
+                    {"\u20A6"}
+                    {o.subtotal.toLocaleString()} {"\u2022"} {timeOf(o.placedAt)}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STAGE_BADGE[o.stage]}`}
+                >
+                  {STAGE_LABELS[o.stage]}
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-ink-faint" />
+              </Link>
+            ))}
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-light text-sm">
-          {icon}
-        </span>
-        <p className="text-xs text-ink-muted">{label}</p>
-      </div>
-      <p className="mt-2 text-lg font-bold text-ink">{value}</p>
+      <p className="text-xs text-ink-muted">{label}</p>
+      <p className="mt-2 text-xl font-bold text-ink">{value}</p>
     </Card>
-  );
-}
-
-type Accent = "new" | "preparing" | "ready" | "delivered";
-
-// Full class names (not built with template strings) so Tailwind always generates them.
-const PILL_STYLES: Record<Accent, { box: string; value: string }> = {
-  new: { box: "bg-status-new-bg", value: "text-status-new" },
-  preparing: { box: "bg-status-preparing-bg", value: "text-status-preparing" },
-  ready: { box: "bg-status-ready-bg", value: "text-status-ready" },
-  delivered: { box: "bg-status-delivered-bg", value: "text-status-delivered" },
-};
-
-function StatusPill({ label, value, accent }: { label: string; value: number; accent: Accent }) {
-  const s = PILL_STYLES[accent];
-  return (
-    <div className={`rounded-xl p-2.5 text-center ${s.box}`}>
-      <p className={`text-base font-bold ${s.value}`}>{value}</p>
-      <p className="mt-0.5 text-[10px] font-medium text-ink-muted">{label}</p>
-    </div>
   );
 }
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-24 rounded-xl" />
-        <Skeleton className="h-9 w-9 rounded-full" />
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-3.5 w-24" />
+        </div>
+        <Skeleton className="h-12 w-12 rounded-full" />
       </div>
-      <Skeleton className="h-20 rounded-2xl" />
       <div className="grid grid-cols-2 gap-3">
         <SkeletonStatCard />
         <SkeletonStatCard />
         <SkeletonStatCard />
         <SkeletonStatCard />
       </div>
-      <Skeleton className="h-28 rounded-2xl" />
-      <Skeleton className="h-32 rounded-2xl" />
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="h-48 rounded-2xl" />
     </div>
   );
 }

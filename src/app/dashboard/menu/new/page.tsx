@@ -12,6 +12,9 @@ import OptionGroupsEditor, {
   type GroupDraft,
 } from "@/components/OptionGroupsEditor";
 
+const INPUT =
+  "w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
+
 export default function AddProductPage() {
   const { getToken } = useAuth();
   const router = useRouter();
@@ -89,41 +92,27 @@ export default function AddProductPage() {
 
   return (
     <div className="max-w-lg space-y-5">
-      <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} aria-label="Back" className="text-ink-muted">
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-lg font-bold text-ink">Add Product</h1>
-      </div>
+      <button onClick={() => router.back()} aria-label="Back" className="inline-flex items-center gap-2 text-ink">
+        <ChevronLeft size={22} />
+        <span className="text-lg font-bold">Add Product</span>
+      </button>
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
+
+      <ImageUpload
+        value={form.imageUrl}
+        onChange={(url) => update("imageUrl", url)}
+        onUploadingChange={setUploading}
+      />
 
       <Field label="Product Name" required>
         <input
           placeholder="e.g. Jollof Rice & Chicken"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
+          className={INPUT}
           value={form.name}
           onChange={(e) => update("name", e.target.value)}
-        />
-      </Field>
-
-      <Field label="Product Photo">
-        <ImageUpload
-          value={form.imageUrl}
-          onChange={(url) => update("imageUrl", url)}
-          onUploadingChange={setUploading}
-        />
-      </Field>
-
-      <Field label="Description">
-        <textarea
-          placeholder="Well seasoned jollof rice with grilled chicken and fresh salad."
-          rows={3}
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
-          value={form.description}
-          onChange={(e) => update("description", e.target.value)}
         />
       </Field>
 
@@ -132,7 +121,7 @@ export default function AddProductPage() {
           list="menu-sections"
           maxLength={40}
           placeholder="e.g. Rice Dishes"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
+          className={INPUT}
           value={form.section}
           onChange={(e) => update("section", e.target.value)}
         />
@@ -151,7 +140,7 @@ export default function AddProductPage() {
           type="number"
           min="0"
           placeholder="4500"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-ink outline-none focus:border-brand"
+          className={INPUT}
           value={form.price}
           onChange={(e) => update("price", e.target.value)}
         />
@@ -161,15 +150,25 @@ export default function AddProductPage() {
         </p>
       </Field>
 
+      <Field label="Description">
+        <textarea
+          placeholder="Well seasoned jollof rice with grilled chicken and fresh salad."
+          rows={3}
+          className={INPUT}
+          value={form.description}
+          onChange={(e) => update("description", e.target.value)}
+        />
+      </Field>
+
       <div>
-        <label className="mb-2 block text-sm font-medium text-ink">Options and extras</label>
+        <label className="mb-1.5 block text-xs font-semibold text-ink">Options and extras</label>
         <OptionGroupsEditor value={groups} onChange={setGroups} onUploadingChange={setUploadingOptions} />
       </div>
 
       <button
         onClick={handleSave}
         disabled={saving || uploading || uploadingOptions}
-        className="w-full rounded-xl bg-brand py-3 font-semibold text-brand-ink disabled:opacity-60"
+        className="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-60"
       >
         {uploading || uploadingOptions ? "Uploading photo..." : saving ? "Saving..." : "Save Product"}
       </button>
@@ -188,7 +187,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-ink">
+      <label className="mb-1.5 block text-xs font-semibold text-ink">
         {label} {required && <span className="text-status-danger">*</span>}
       </label>
       {children}

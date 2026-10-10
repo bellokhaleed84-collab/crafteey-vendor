@@ -79,7 +79,7 @@ export default function TierSettingsPage() {
 
   if (!state) {
     return (
-      <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">
+      <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">
         {error ?? "Couldn't load your plan."}
       </p>
     );
@@ -91,31 +91,28 @@ export default function TierSettingsPage() {
   return (
     <div className="max-w-lg space-y-5">
       <div>
-        <Link
-          href="/dashboard/settings"
-          className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-brand-dark"
-        >
-          <ChevronLeft size={14} /> Settings
+        <Link href="/dashboard/settings" className="mb-2 inline-flex items-center gap-2 text-ink">
+          <ChevronLeft size={22} />
+          <span className="text-lg font-bold">Store Tier</span>
         </Link>
-        <h1 className="text-xl font-bold text-ink">Store Tier</h1>
-        <p className="mt-1 text-sm text-ink-muted">
+        <p className="text-sm text-ink-muted">
           Your tier sets the commission Crafteey takes on each order and how your
           store shows up in the Hub. Tier changes are reviewed by our team.
         </p>
       </div>
 
       {error && (
-        <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       )}
 
       {pending && (
-        <p className="rounded-lg bg-brand-light p-3 text-sm text-ink">
+        <p className="rounded-xl bg-brand-light p-3 text-sm text-ink">
           Your request to move to <b>{TIER_INFO[pending.requestedTier].label}</b> is waiting
           for review. You&apos;ll stay on {TIER_INFO[state.tier].label} until it&apos;s approved.
         </p>
       )}
       {rejected && (
-        <p className="rounded-lg bg-status-danger-bg p-3 text-sm text-status-danger">
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">
           Your last request to move to {TIER_INFO[rejected.requestedTier].label} was declined.
         </p>
       )}
@@ -142,7 +139,7 @@ export default function TierSettingsPage() {
       <button
         onClick={requestChange}
         disabled={submitting || !!pending || !selected || selected === state.tier}
-        className="w-full rounded-xl bg-brand py-3 font-semibold text-brand-ink disabled:opacity-50"
+        className="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-50"
       >
         {submitting
           ? "Sending..."

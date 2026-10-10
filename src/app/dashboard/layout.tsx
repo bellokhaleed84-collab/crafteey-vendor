@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Home, ClipboardList, Package, Wallet, MoreHorizontal } from "lucide-react";
 import VendorGuard from "@/components/VendorGuard";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreAccess } from "@/contexts/StoreRoleContext";
 
@@ -38,8 +39,8 @@ function Shell({ children }: { children: ReactNode }) {
 
   if (role === "staff") {
     return (
-      <div className="min-h-screen bg-surface-muted">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-surface-border bg-surface px-4 py-3">
+      <div className="min-h-screen bg-white">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-surface-border bg-white px-4 py-3">
           <div className="min-w-0">
             <p className="text-[11px] text-ink-muted">Working at</p>
             <p className="truncate text-sm font-bold text-ink">{storeName}</p>
@@ -50,24 +51,31 @@ function Shell({ children }: { children: ReactNode }) {
               await signOut();
               router.replace("/login");
             }}
-            className="rounded-full border border-surface-border px-3.5 py-1.5 text-xs font-semibold text-ink"
+            className="rounded-full border border-surface-border px-4 py-2 text-xs font-semibold text-ink"
           >
             Log out
           </button>
         </header>
-        <main className="mx-auto max-w-3xl p-6 pb-10">
-          {staffBlocked ? <p className="text-sm text-ink-muted">Loading…</p> : children}
+        <main className="mx-auto max-w-3xl p-5 pb-10">
+          {staffBlocked ? (
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-24 rounded-2xl" />
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface-muted">
-      <main className="mx-auto max-w-3xl p-6 pb-28">{children}</main>
+    <div className="min-h-screen bg-white">
+      <main className="mx-auto max-w-3xl p-5 pb-28">{children}</main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-surface-border bg-surface"
+        className="fixed inset-x-0 bottom-0 z-10 border-t border-surface-border bg-white"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto grid max-w-3xl grid-cols-5">
@@ -79,7 +87,7 @@ function Shell({ children }: { children: ReactNode }) {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-1 py-2.5 text-xs font-medium ${
+                className={`flex flex-col items-center gap-1 py-3 text-[11px] font-semibold ${
                   active ? "text-brand-dark" : "text-ink-faint"
                 }`}
               >

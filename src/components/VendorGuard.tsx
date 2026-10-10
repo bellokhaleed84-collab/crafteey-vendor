@@ -8,6 +8,7 @@ import { fetchMyStaffAccess } from "@/lib/staffApi";
 import { isVendorApproved } from "@/lib/vendorApproval";
 import { StoreAccessProvider, type StoreAccessValue } from "@/contexts/StoreRoleContext";
 import VerifyEmailScreen from "@/components/VerifyEmailScreen";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 // Lets in approved store owners and active staff. Everyone else is sent to
 // /login (signed out) or /pending (no approved store). Invited staff who haven't
@@ -77,8 +78,8 @@ export default function VendorGuard({ children }: { children: ReactNode }) {
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6">
-        <p className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</p>
+      <main className="flex min-h-screen items-center justify-center bg-white px-6">
+        <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       </main>
     );
   }
@@ -89,8 +90,17 @@ export default function VendorGuard({ children }: { children: ReactNode }) {
 
   if (state !== "ready") {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-gray-500">Loading…</p>
+      <main className="min-h-screen bg-white p-5">
+        <div className="mx-auto max-w-3xl space-y-4">
+          <Skeleton className="h-12 w-48 rounded-xl" />
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-24 rounded-2xl" />
+          </div>
+          <Skeleton className="h-40 rounded-2xl" />
+        </div>
       </main>
     );
   }

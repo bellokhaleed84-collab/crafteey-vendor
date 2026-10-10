@@ -36,19 +36,17 @@ export default function SplashPage() {
   }, [loading, user, getToken, router]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-brand-ink px-6">
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-brand text-4xl font-black text-brand-ink">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-navy px-6">
+      <div className="flex flex-col items-center gap-5">
+        <div className="flex h-28 w-28 items-center justify-center rounded-[32px] bg-white text-6xl font-black text-navy">
           C
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">Crafteey</h1>
-          <p className="text-sm font-medium text-brand">Vendor</p>
+          <h1 className="text-4xl font-bold tracking-tight text-white">crafteey</h1>
+          <p className="mt-1 text-xl font-light tracking-wide text-white/90">vendors</p>
         </div>
       </div>
-      <p className="absolute bottom-16 text-xs text-white/50">
-        Powering great local businesses
-      </p>
+      <p className="absolute bottom-16 text-xs text-white/50">Powering great local businesses</p>
     </main>
   );
 }

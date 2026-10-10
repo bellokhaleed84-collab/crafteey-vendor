@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Share2, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, Share2, Trash2, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -87,27 +87,25 @@ export default function StaffPage() {
     `You've been added as staff to receive orders on Crafteey Vendor. Create your staff account here: ${window.location.origin}/staff-signup (use this email: ${toEmail}), then tap the verification link we email you.`;
 
   const field =
-    "w-full rounded-xl border border-surface-border bg-white px-4 py-3 text-sm text-ink outline-none";
+    "w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
 
   return (
     <div className="max-w-lg space-y-5">
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard/settings" aria-label="Back to settings" className="text-ink">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-xl font-bold text-ink">Staff</h1>
-      </div>
+      <Link href="/dashboard/settings" aria-label="Back to settings" className="inline-flex items-center gap-2 text-ink">
+        <ChevronLeft size={22} />
+        <span className="text-lg font-bold">Staff</span>
+      </Link>
 
       <p className="text-sm text-ink-muted">
         Staff can see, accept and reject your orders and mark them ready. They can&apos;t see your earnings,
         menu or settings.
       </p>
 
-      {error && <p className="rounded-lg bg-status-danger-bg p-2 text-sm text-status-danger">{error}</p>}
+      {error && <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>}
 
       {added && (
         <Card className="space-y-3 p-4">
-          <p className="text-sm font-semibold text-ink">{added.name} has been added</p>
+          <p className="text-sm font-bold text-ink">{added.name} has been added</p>
           <p className="text-xs text-ink-muted">
             Ask them to create a staff account using <span className="font-semibold">{added.email}</span> and
             verify that email. Their orders screen opens as soon as they sign in.
@@ -116,7 +114,7 @@ export default function StaffPage() {
             href={`https://wa.me/?text=${encodeURIComponent(inviteMessage(added.email))}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-1.5 rounded-xl bg-brand py-2.5 text-xs font-bold text-ink"
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-brand py-3 text-xs font-bold text-brand-ink"
           >
             <Share2 size={14} />
             Tell them on WhatsApp
@@ -145,7 +143,7 @@ export default function StaffPage() {
           type="button"
           onClick={addStaff}
           disabled={busy || name.trim().length < 2 || !email.includes("@")}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-ink disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-60"
         >
           <UserPlus size={16} />
           {busy ? "Adding..." : "Add staff"}
@@ -162,20 +160,20 @@ export default function StaffPage() {
           </p>
         ) : (
           staff.map((m) => (
-            <Card key={m._id} className="flex items-center gap-3 p-3">
+            <Card key={m._id} className="flex items-center gap-3 p-3.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-ink">{m.name}</p>
                 <p className="truncate text-xs text-ink-muted">
-                  {m.email} · {m.status === "active" ? "Active" : "Waiting for them to sign up"}
+                  {m.email} {"\u00B7"} {m.status === "active" ? "Active" : "Waiting for them to sign up"}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => remove(m)}
                 aria-label={`Remove ${m.name}`}
-                className="p-1.5 text-status-danger"
+                className="flex h-10 w-10 items-center justify-center text-status-danger"
               >
-                <Trash2 size={16} />
+                <Trash2 size={18} />
               </button>
             </Card>
           ))
