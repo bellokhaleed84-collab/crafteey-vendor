@@ -98,7 +98,7 @@ export function validateDrafts(drafts: GroupDraft[]): string | null {
 }
 
 const FIELD =
-  "rounded-xl border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
+  "rounded-xl border border-surface-border bg-surface px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
 
 export default function OptionGroupsEditor({
   value,

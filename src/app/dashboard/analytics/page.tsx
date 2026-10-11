@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
             className={`rounded-full border px-4 py-2 text-xs font-semibold ${
               range === r
                 ? "border-brand bg-brand text-brand-ink"
-                : "border-surface-border bg-white text-ink-muted"
+                : "border-surface-border bg-surface text-ink-muted"
             }`}
           >
             {r} days

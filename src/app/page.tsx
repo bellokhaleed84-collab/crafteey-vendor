@@ -38,7 +38,7 @@ export default function SplashPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-navy px-6">
       <div className="flex flex-col items-center gap-5">
-        <div className="flex h-28 w-28 items-center justify-center rounded-[32px] bg-white text-6xl font-black text-navy">
+        <div className="flex h-28 w-28 items-center justify-center rounded-[32px] bg-surface text-6xl font-black text-navy">
           C
         </div>
         <div className="text-center">

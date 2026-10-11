@@ -149,7 +149,7 @@ export default function BankAccountPage() {
               setJustSaved(false);
               setError(null);
             }}
-            className="w-full rounded-xl border border-surface-border bg-white py-3.5 text-sm font-bold text-ink"
+            className="w-full rounded-xl border border-surface-border bg-surface py-3.5 text-sm font-bold text-ink"
           >
             Change bank account
           </button>
@@ -167,7 +167,7 @@ export default function BankAccountPage() {
               value={bankCode}
               onChange={(e) => setBankCode(e.target.value)}
               disabled={saving}
-              className="w-full rounded-xl border border-surface-border bg-white px-3 py-3.5 text-sm text-ink"
+              className="w-full rounded-xl border border-surface-border bg-surface px-3 py-3.5 text-sm text-ink"
             >
               <option value="">Select your bank</option>
               {banks.map((b) => (
@@ -188,7 +188,7 @@ export default function BankAccountPage() {
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
               disabled={saving}
-              className="w-full rounded-xl border border-surface-border bg-white px-3 py-3.5 text-sm text-ink"
+              className="w-full rounded-xl border border-surface-border bg-surface px-3 py-3.5 text-sm text-ink"
             />
           </div>
 
@@ -207,7 +207,7 @@ export default function BankAccountPage() {
                 setError(null);
               }}
               disabled={saving}
-              className="w-full rounded-xl border border-surface-border bg-white py-3.5 text-sm font-bold text-ink-muted"
+              className="w-full rounded-xl border border-surface-border bg-surface py-3.5 text-sm font-bold text-ink-muted"
             >
               Cancel
             </button>

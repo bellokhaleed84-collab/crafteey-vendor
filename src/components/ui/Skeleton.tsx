@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 
 // Base shimmer block. Compose the shapes below from this rather than
-// hand-rolling `animate-pulse bg-gray-200` everywhere.
+// hand-rolling `animate-pulse bg-surface-border` everywhere.
 export function Skeleton({ className = "", ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div

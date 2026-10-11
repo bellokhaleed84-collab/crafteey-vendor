@@ -1,5 +1,9 @@
 import type { Config } from "tailwindcss";
 
+// Colours that change in dark mode read their value from CSS variables
+// (defined in globals.css). "<alpha-value>" keeps classes like bg-surface/95 working.
+const v = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: "class",
   content: [
@@ -11,8 +15,8 @@ const config: Config = {
       colors: {
         brand: {
           DEFAULT: "#FFC800",
-          dark: "#D9A400",
-          light: "#FFF6D6",
+          dark: v("brand-dark"),
+          light: v("brand-light"),
           ink: "#1A1A1A"
         },
         navy: {
@@ -20,35 +24,36 @@ const config: Config = {
           soft: "#2A2080"
         },
         promo: "#5B21B6",
+        page: v("page"),
         ink: {
-          DEFAULT: "#1A1A1A",
-          muted: "#6B7280",
-          faint: "#9CA3AF"
+          DEFAULT: v("ink"),
+          muted: v("ink-muted"),
+          faint: v("ink-faint")
         },
         surface: {
-          DEFAULT: "#FFFFFF",
-          muted: "#F7F8FA",
-          border: "#E9ECF0"
+          DEFAULT: v("surface"),
+          muted: v("surface-muted"),
+          border: v("surface-border")
         },
         status: {
-          success: "#16A34A",
-          "success-bg": "#ECFDF3",
-          warning: "#D97706",
-          "warning-bg": "#FFF7ED",
-          danger: "#DC2626",
-          "danger-bg": "#FEF2F2",
-          info: "#2563EB",
-          "info-bg": "#EFF6FF",
-          new: "#2563EB",
-          "new-bg": "#EFF6FF",
-          preparing: "#D97706",
-          "preparing-bg": "#FFF7ED",
-          ready: "#B45309",
-          "ready-bg": "#FFFBEB",
-          delivered: "#16A34A",
-          "delivered-bg": "#ECFDF3",
-          cancelled: "#DC2626",
-          "cancelled-bg": "#FEF2F2"
+          success: v("status-success"),
+          "success-bg": v("status-success-bg"),
+          warning: v("status-warning"),
+          "warning-bg": v("status-warning-bg"),
+          danger: v("status-danger"),
+          "danger-bg": v("status-danger-bg"),
+          info: v("status-info"),
+          "info-bg": v("status-info-bg"),
+          new: v("status-new"),
+          "new-bg": v("status-new-bg"),
+          preparing: v("status-preparing"),
+          "preparing-bg": v("status-preparing-bg"),
+          ready: v("status-ready"),
+          "ready-bg": v("status-ready-bg"),
+          delivered: v("status-delivered"),
+          "delivered-bg": v("status-delivered-bg"),
+          cancelled: v("status-cancelled"),
+          "cancelled-bg": v("status-cancelled-bg")
         }
       },
       boxShadow: {

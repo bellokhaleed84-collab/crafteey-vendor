@@ -49,7 +49,7 @@ export default function VerifyEmailScreen({ onChecked }: { onChecked: () => void
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-6">
+    <main className="flex min-h-screen items-center justify-center bg-surface px-6">
       <div className="w-full max-w-sm space-y-4 text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-light text-brand-dark">
           <Mail size={28} />
@@ -80,7 +80,7 @@ export default function VerifyEmailScreen({ onChecked }: { onChecked: () => void
           type="button"
           onClick={resend}
           disabled={busy}
-          className="w-full rounded-xl border border-surface-border bg-white py-3.5 text-sm font-semibold text-ink disabled:opacity-60"
+          className="w-full rounded-xl border border-surface-border bg-surface py-3.5 text-sm font-semibold text-ink disabled:opacity-60"
         >
           Send the email again
         </button>

@@ -116,7 +116,7 @@ export default function OrdersPage() {
             className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${
               filter === f.key
                 ? "border-brand bg-brand text-brand-ink"
-                : "border-surface-border bg-white text-ink-muted"
+                : "border-surface-border bg-surface text-ink-muted"
             }`}
           >
             {f.label} ({f.count})

@@ -151,7 +151,7 @@ function EditableField({
         <div className="space-y-2">
           <div className="flex gap-2">
             <input
-              className="min-w-0 flex-1 rounded-xl border border-surface-border bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"
+              className="min-w-0 flex-1 rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-brand"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               autoFocus

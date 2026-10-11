@@ -22,6 +22,7 @@ import { apiFetch, readError } from "@/lib/apiClient";
 import { isVendorApproved } from "@/lib/vendorApproval";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import ThemePicker from "@/components/ThemePicker";
 
 interface Vendor {
   businessName: string;
@@ -195,6 +196,11 @@ export default function SettingsPage() {
         </Card>
       </section>
 
+      <section className="space-y-2">
+        <h2 className="px-1 text-xs font-bold uppercase tracking-wide text-ink-faint">Appearance</h2>
+        <ThemePicker />
+      </section>
+
       <Card className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
@@ -254,6 +260,7 @@ function SettingsSkeleton() {
       <Skeleton className="h-16 rounded-2xl" />
       <Skeleton className="h-72 rounded-2xl" />
       <Skeleton className="h-36 rounded-2xl" />
+      <Skeleton className="h-52 rounded-2xl" />
       <Skeleton className="h-52 rounded-2xl" />
       <Skeleton className="h-16 rounded-2xl" />
     </div>

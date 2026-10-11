@@ -110,7 +110,7 @@ export default function LoginPage() {
   const isStaff = mode === "staff";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-6 py-8">
+    <main className="flex min-h-screen items-center justify-center bg-surface px-6 py-8">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
         <div className="space-y-1">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-navy text-2xl font-black text-white">
@@ -132,7 +132,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => switchMode(m)}
               className={`rounded-lg py-2.5 text-sm font-semibold transition ${
-                mode === m ? "bg-white text-ink shadow-sm" : "text-ink-muted"
+                mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-muted"
               }`}
             >
               {m === "owner" ? "Store owner" : "Staff"}
@@ -149,7 +149,7 @@ export default function LoginPage() {
 
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-ink">Email</label>
-          <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-white px-4 focus-within:border-brand">
+          <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-surface px-4 focus-within:border-brand">
             <Mail size={18} className="shrink-0 text-ink-faint" />
             <input
               type="email"
@@ -165,7 +165,7 @@ export default function LoginPage() {
 
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-ink">Password</label>
-          <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-white px-4 focus-within:border-brand">
+          <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-surface px-4 focus-within:border-brand">
             <Lock size={18} className="shrink-0 text-ink-faint" />
             <input
               type="password"

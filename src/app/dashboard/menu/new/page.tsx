@@ -13,7 +13,7 @@ import OptionGroupsEditor, {
 } from "@/components/OptionGroupsEditor";
 
 const INPUT =
-  "w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
+  "w-full rounded-xl border border-surface-border bg-surface px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
 
 export default function AddProductPage() {
   const { getToken } = useAuth();

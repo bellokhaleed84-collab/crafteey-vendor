@@ -449,7 +449,7 @@ export default function OrderDetailPage() {
               disabled={updating}
               className={`w-full rounded-xl py-3.5 text-sm font-bold transition disabled:opacity-60 ${
                 a.action === "reject"
-                  ? "border border-status-danger bg-white text-status-danger"
+                  ? "border border-status-danger bg-surface text-status-danger"
                   : "bg-brand text-brand-ink"
               }`}
             >

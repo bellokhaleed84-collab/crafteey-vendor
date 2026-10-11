@@ -36,11 +36,11 @@ const DURATIONS: { days: number; label: string }[] = [
 
 const chip = (on: boolean) =>
   `rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-    on ? "border-brand bg-brand text-brand-ink" : "border-surface-border bg-white text-ink-muted"
+    on ? "border-brand bg-brand text-brand-ink" : "border-surface-border bg-surface text-ink-muted"
   }`;
 
 const field =
-  "w-full rounded-xl border border-surface-border bg-white px-4 py-3 text-base text-ink outline-none focus:border-brand";
+  "w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-base text-ink outline-none focus:border-brand";
 
 function Stepper({
   label,
@@ -258,7 +258,7 @@ export default function NewPromotionPage() {
                     onClick={() => togglePick(p._id)}
                     aria-pressed={on}
                     className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left ${
-                      on ? "border-brand bg-brand-light" : "border-surface-border bg-white"
+                      on ? "border-brand bg-brand-light" : "border-surface-border bg-surface"
                     }`}
                   >
                     <span

@@ -105,7 +105,7 @@ export default function MorePage() {
 
       <button
         onClick={handleSignOut}
-        className="flex w-full items-center gap-3 rounded-2xl border border-surface-border bg-white p-4 text-left text-status-danger shadow-card"
+        className="flex w-full items-center gap-3 rounded-2xl border border-surface-border bg-surface p-4 text-left text-status-danger shadow-card"
       >
         <LogOut size={20} />
         <span className="font-semibold">Log Out</span>

@@ -2,14 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light colours (default). Values are "R G B" so Tailwind can add opacity. */
 :root {
-  --background: #ffffff;
-  --foreground: #1a1a1a;
+  color-scheme: light;
+  --page: 255 255 255;
+  --surface: 255 255 255;
+  --surface-muted: 247 248 250;
+  --surface-border: 233 236 240;
+  --shimmer: 246 247 249;
+
+  --ink: 26 26 26;
+  --ink-muted: 107 114 128;
+  --ink-faint: 156 163 175;
+
+  --brand-dark: 217 164 0;
+  --brand-light: 255 246 214;
+
+  --status-success: 22 163 74;
+  --status-success-bg: 236 253 243;
+  --status-warning: 217 119 6;
+  --status-warning-bg: 255 247 237;
+  --status-danger: 220 38 38;
+  --status-danger-bg: 254 242 242;
+  --status-info: 37 99 235;
+  --status-info-bg: 239 246 255;
+  --status-new: 37 99 235;
+  --status-new-bg: 239 246 255;
+  --status-preparing: 217 119 6;
+  --status-preparing-bg: 255 247 237;
+  --status-ready: 180 83 9;
+  --status-ready-bg: 255 251 235;
+  --status-delivered: 22 163 74;
+  --status-delivered-bg: 236 253 243;
+  --status-cancelled: 220 38 38;
+  --status-cancelled-bg: 254 242 242;
+}
+
+/* Dark colours. Applied when <html> has the "dark" class. */
+.dark {
+  color-scheme: dark;
+  --page: 18 19 22;
+  --surface: 27 29 34;
+  --surface-muted: 35 38 44;
+  --surface-border: 44 47 54;
+  --shimmer: 58 62 70;
+
+  --ink: 243 244 246;
+  --ink-muted: 161 167 179;
+  --ink-faint: 123 129 144;
+
+  --brand-dark: 242 184 0;
+  --brand-light: 58 47 11;
+
+  --status-success: 74 222 128;
+  --status-success-bg: 16 41 27;
+  --status-warning: 251 191 36;
+  --status-warning-bg: 51 34 12;
+  --status-danger: 248 113 113;
+  --status-danger-bg: 59 21 23;
+  --status-info: 96 165 250;
+  --status-info-bg: 18 38 63;
+  --status-new: 96 165 250;
+  --status-new-bg: 18 38 63;
+  --status-preparing: 251 191 36;
+  --status-preparing-bg: 51 34 12;
+  --status-ready: 252 211 77;
+  --status-ready-bg: 51 39 8;
+  --status-delivered: 74 222 128;
+  --status-delivered-bg: 16 41 27;
+  --status-cancelled: 248 113 113;
+  --status-cancelled-bg: 59 21 23;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: rgb(var(--ink));
+  background: rgb(var(--page));
 }
 
 @keyframes shimmer {
@@ -20,9 +87,9 @@ body {
 .skeleton-shimmer {
   background-image: linear-gradient(
     90deg,
-    theme("colors.surface.border") 0%,
-    #f6f7f9 50%,
-    theme("colors.surface.border") 100%
+    rgb(var(--surface-border)) 0%,
+    rgb(var(--shimmer)) 50%,
+    rgb(var(--surface-border)) 100%
   );
   background-size: 800px 100%;
   animation: shimmer 1.4s ease-in-out infinite;

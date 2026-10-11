@@ -139,7 +139,7 @@ export default function PendingPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-white px-5 py-8">
+    <main className="min-h-screen bg-surface px-5 py-8">
       <div className="mx-auto w-full max-w-sm space-y-5">
         {checking && !vendor && !missing ? (
           <div className="space-y-3">
@@ -249,7 +249,7 @@ export default function PendingPage() {
               setChecking(true);
               load();
             }}
-            className="flex-1 rounded-xl border border-surface-border bg-white py-3.5 text-sm font-semibold text-ink"
+            className="flex-1 rounded-xl border border-surface-border bg-surface py-3.5 text-sm font-semibold text-ink"
           >
             Check again
           </button>

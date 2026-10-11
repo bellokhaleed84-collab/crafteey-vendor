@@ -101,7 +101,7 @@ export default function VendorNotificationsPage() {
             className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${
               tab === t.key
                 ? "border-brand bg-brand text-brand-ink"
-                : "border-surface-border bg-white text-ink-muted"
+                : "border-surface-border bg-surface text-ink-muted"
             }`}
           >
             {t.label}
@@ -135,7 +135,7 @@ export default function VendorNotificationsPage() {
               type="button"
               onClick={() => n.link && router.push(n.link)}
               className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left ${
-                n.read ? "border-surface-border bg-white" : "border-brand bg-brand-light"
+                n.read ? "border-surface-border bg-surface" : "border-brand bg-brand-light"
               }`}
             >
               <span

@@ -97,7 +97,7 @@ export default function NotificationSettingsPage() {
                   }`}
                 >
                   <span
-                    className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                    className={`absolute top-1 h-6 w-6 rounded-full bg-surface shadow transition-all ${
                       prefs[r.key] ? "left-7" : "left-1"
                     }`}
                   />

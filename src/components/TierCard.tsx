@@ -20,7 +20,7 @@ export default function TierCard({
       onClick={onSelect}
       disabled={disabled}
       className={`w-full rounded-2xl border-2 p-4 text-left disabled:opacity-60 ${
-        selected ? "border-brand bg-brand-light" : "border-surface-border bg-white"
+        selected ? "border-brand bg-brand-light" : "border-surface-border bg-surface"
       }`}
     >
       <div className="flex items-center justify-between gap-2">

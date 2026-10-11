@@ -210,7 +210,7 @@ export default function ProductDetailPage() {
                 maxLength={40}
                 autoFocus
                 placeholder="e.g. Rice Dishes"
-                className="min-w-0 flex-1 rounded-xl border border-surface-border bg-white px-3 py-3 text-sm text-ink outline-none focus:border-brand"
+                className="min-w-0 flex-1 rounded-xl border border-surface-border bg-surface px-3 py-3 text-sm text-ink outline-none focus:border-brand"
                 value={sectionDraft}
                 onChange={(e) => setSectionDraft(e.target.value)}
               />
@@ -240,7 +240,7 @@ export default function ProductDetailPage() {
                 setSectionDraft(product.section ?? "");
                 setEditingSection(true);
               }}
-              className="inline-block rounded-full border border-surface-border bg-white px-3.5 py-2 text-xs font-semibold text-ink-muted"
+              className="inline-block rounded-full border border-surface-border bg-surface px-3.5 py-2 text-xs font-semibold text-ink-muted"
             >
               {product.section ? `Menu section: ${product.section}` : "+ Add menu section"}
             </button>
@@ -352,7 +352,7 @@ export default function ProductDetailPage() {
       <button
         onClick={handleDelete}
         disabled={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-status-danger bg-white py-3.5 text-sm font-bold text-status-danger disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-status-danger bg-surface py-3.5 text-sm font-bold text-status-danger disabled:opacity-60"
       >
         <Trash2 size={16} /> Delete product
       </button>

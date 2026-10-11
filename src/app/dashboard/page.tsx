@@ -155,7 +155,7 @@ export default function DashboardOverviewPage() {
           <Link
             href="/dashboard/notifications"
             aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
-            className="relative flex h-12 w-12 items-center justify-center rounded-full border border-surface-border bg-white text-ink"
+            className="relative flex h-12 w-12 items-center justify-center rounded-full border border-surface-border bg-surface text-ink"
           >
             <Bell size={20} />
             {unread > 0 && (

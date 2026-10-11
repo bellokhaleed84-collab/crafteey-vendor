@@ -44,8 +44,8 @@ function Shell({ children }: { children: ReactNode }) {
 
   if (role === "staff") {
     return (
-      <div className="min-h-screen bg-white">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-surface-border bg-white px-4 py-3">
+      <div className="min-h-screen bg-page">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-surface-border bg-surface px-4 py-3">
           <div className="min-w-0">
             <p className="text-[11px] text-ink-muted">Working at</p>
             <p className="truncate text-sm font-bold text-ink">{storeName}</p>
@@ -76,11 +76,11 @@ function Shell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-page">
       <main className="mx-auto max-w-3xl p-5 pb-28">{children}</main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-surface-border bg-white"
+        className="fixed inset-x-0 bottom-0 z-10 border-t border-surface-border bg-surface"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto grid max-w-3xl grid-cols-5">

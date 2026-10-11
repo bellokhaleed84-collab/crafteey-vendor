@@ -88,7 +88,7 @@ export default function ImageUpload({
             <img
               src={value}
               alt="Store logo"
-              className="h-28 w-28 rounded-2xl border border-surface-border bg-white object-contain"
+              className="h-28 w-28 rounded-2xl border border-surface-border bg-surface object-contain"
             />
             <div className="flex flex-col gap-2">
               <button
@@ -145,7 +145,7 @@ export default function ImageUpload({
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-ink shadow"
+                className="rounded-full bg-surface/95 px-4 py-2 text-xs font-semibold text-ink shadow"
               >
                 {uploading ? "Uploading\u2026" : "Change"}
               </button>
@@ -153,7 +153,7 @@ export default function ImageUpload({
                 type="button"
                 onClick={() => onChange("")}
                 disabled={uploading}
-                className="rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-status-danger shadow"
+                className="rounded-full bg-surface/95 px-4 py-2 text-xs font-semibold text-status-danger shadow"
               >
                 Remove
               </button>
@@ -165,7 +165,7 @@ export default function ImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-border bg-white text-sm text-ink-muted"
+          className="flex h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-border bg-surface text-sm text-ink-muted"
         >
           {uploading ? "Uploading\u2026" : "Tap to add logo"}
           <span className="mt-1 text-xs text-ink-faint">Up to {MAX_MB}MB</span>
@@ -175,7 +175,7 @@ export default function ImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="rounded-xl border-2 border-dashed border-surface-border bg-white px-4 py-3 text-xs font-semibold text-ink-muted"
+          className="rounded-xl border-2 border-dashed border-surface-border bg-surface px-4 py-3 text-xs font-semibold text-ink-muted"
         >
           {uploading ? "Uploading\u2026" : "Tap to add a photo"}
         </button>
@@ -184,7 +184,7 @@ export default function ImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex h-40 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-surface-border bg-white text-sm text-ink-muted"
+          className="flex h-40 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-surface-border bg-surface text-sm text-ink-muted"
         >
           <Camera size={26} className="text-ink-faint" />
           {uploading ? "Uploading\u2026" : "Tap to upload product image"}

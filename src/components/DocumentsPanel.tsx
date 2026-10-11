@@ -145,7 +145,7 @@ export default function DocumentsPanel({
             type="button"
             onClick={() => choose(key)}
             disabled={busyType !== null}
-            className="flex min-h-16 w-full items-center gap-3 rounded-2xl border-2 border-dashed border-surface-border bg-white p-3 text-left disabled:opacity-60"
+            className="flex min-h-16 w-full items-center gap-3 rounded-2xl border-2 border-dashed border-surface-border bg-surface p-3 text-left disabled:opacity-60"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
               <Icon size={18} />

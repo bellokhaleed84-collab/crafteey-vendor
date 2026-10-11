@@ -100,8 +100,8 @@ export default function VendorSupportChatPage() {
   const fixed = ticket?.status === "fixed";
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-white">
-      <header className="flex items-center gap-3 border-b border-surface-border bg-white px-4 py-3">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-surface">
+      <header className="flex items-center gap-3 border-b border-surface-border bg-surface px-4 py-3">
         <Link
           href="/dashboard/more/help/tickets"
           aria-label="Back to my support chats"
@@ -151,7 +151,7 @@ export default function VendorSupportChatPage() {
                   className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                     mine
                       ? "rounded-br-md bg-brand text-brand-ink"
-                      : "rounded-bl-md border border-surface-border bg-white text-ink"
+                      : "rounded-bl-md border border-surface-border bg-surface text-ink"
                   }`}
                 >
                   {!mine && <p className="text-[10px] font-bold uppercase opacity-60">Crafteey Support</p>}
@@ -169,7 +169,7 @@ export default function VendorSupportChatPage() {
       )}
 
       {ticket && fixed && (
-        <div className="border-t border-surface-border bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="border-t border-surface-border bg-surface p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto w-full max-w-2xl space-y-3">
             <div className="flex items-start gap-2 rounded-xl bg-status-success-bg p-3 text-status-success">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
@@ -188,7 +188,7 @@ export default function VendorSupportChatPage() {
       {ticket && !fixed && (
         <form
           onSubmit={send}
-          className="space-y-2 border-t border-surface-border bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className="space-y-2 border-t border-surface-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         >
           <div className="mx-auto w-full max-w-2xl space-y-2">
             {sendError && <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{sendError}</p>}
@@ -199,7 +199,7 @@ export default function VendorSupportChatPage() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type a message..."
-                className="max-h-32 min-h-12 flex-1 resize-none rounded-xl border border-surface-border bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"
+                className="max-h-32 min-h-12 flex-1 resize-none rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-brand"
               />
               <button
                 type="submit"

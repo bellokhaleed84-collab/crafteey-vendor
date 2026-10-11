@@ -117,7 +117,7 @@ export default function LocationPage() {
         <textarea
           rows={3}
           placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos"
-          className="w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand"
+          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
         />
@@ -134,7 +134,7 @@ export default function LocationPage() {
       <button
         onClick={useMyLocation}
         disabled={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-border bg-white py-3.5 text-sm font-semibold text-ink disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface py-3.5 text-sm font-semibold text-ink disabled:opacity-60"
       >
         <LocateFixed size={18} /> Use my current location
       </button>

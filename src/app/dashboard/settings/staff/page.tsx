@@ -87,7 +87,7 @@ export default function StaffPage() {
     `You've been added as staff to receive orders on Crafteey Vendor. Create your staff account here: ${window.location.origin}/staff-signup (use this email: ${toEmail}), then tap the verification link we email you.`;
 
   const field =
-    "w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
+    "w-full rounded-xl border border-surface-border bg-surface px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand";
 
   return (
     <div className="max-w-lg space-y-5">

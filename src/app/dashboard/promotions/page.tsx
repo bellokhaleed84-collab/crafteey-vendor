@@ -146,7 +146,7 @@ export default function PromotionsPage() {
                     disabled={busyId === p._id}
                     className={`mt-3 w-full rounded-xl py-3 text-sm font-bold transition disabled:opacity-60 ${
                       p.isActive
-                        ? "border border-status-danger bg-white text-status-danger"
+                        ? "border border-status-danger bg-surface text-status-danger"
                         : "bg-brand text-brand-ink"
                     }`}
                   >

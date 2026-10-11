@@ -194,7 +194,7 @@ export default function WalletPage() {
       ) : !confirming ? (
         <Card className="space-y-3 p-4">
           <label className="block text-xs font-semibold text-ink-muted">Amount to withdraw</label>
-          <div className="flex items-center gap-2 rounded-xl border border-surface-border bg-white px-3">
+          <div className="flex items-center gap-2 rounded-xl border border-surface-border bg-surface px-3">
             <span className="text-lg font-bold text-ink">{"\u20A6"}</span>
             <input
               type="text"
@@ -243,7 +243,7 @@ export default function WalletPage() {
             <button
               onClick={() => setConfirming(false)}
               disabled={submitting}
-              className="rounded-xl border border-surface-border bg-white py-3.5 text-sm font-bold text-ink-muted disabled:opacity-50"
+              className="rounded-xl border border-surface-border bg-surface py-3.5 text-sm font-bold text-ink-muted disabled:opacity-50"
             >
               Cancel
             </button>

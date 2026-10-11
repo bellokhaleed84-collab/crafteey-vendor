@@ -140,7 +140,7 @@ export default function MenuPage() {
     <div className="space-y-5">
       <h1 className="text-xl font-bold text-ink">My Products</h1>
 
-      <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-white px-4 focus-within:border-brand">
+      <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-surface px-4 focus-within:border-brand">
         <Search size={18} className="shrink-0 text-ink-faint" />
         <input
           type="text"
@@ -159,7 +159,7 @@ export default function MenuPage() {
             className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition ${
               filter === f.key
                 ? "border-brand bg-brand text-brand-ink"
-                : "border-surface-border bg-white text-ink-muted"
+                : "border-surface-border bg-surface text-ink-muted"
             }`}
           >
             {f.label} ({f.count})
@@ -242,7 +242,7 @@ export default function MenuPage() {
                     }}
                   />
                   <div
-                    className="absolute right-3 top-14 z-30 w-52 overflow-hidden rounded-xl border border-surface-border bg-white shadow-lg"
+                    className="absolute right-3 top-14 z-30 w-52 overflow-hidden rounded-xl border border-surface-border bg-surface shadow-lg"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
@@ -292,7 +292,7 @@ export default function MenuPage() {
           onClick={() => setStockFor(null)}
         >
           <div
-            className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5"
+            className="w-full max-w-sm space-y-4 rounded-2xl bg-surface p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div>
@@ -307,7 +307,7 @@ export default function MenuPage() {
               placeholder="e.g. 20"
               value={stockInput}
               onChange={(e) => setStockInput(e.target.value)}
-              className="w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand"
+              className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand"
             />
             <p className="text-xs text-ink-faint">
               It goes down by itself on every paid order and the item shows as sold out at 0. If you reject

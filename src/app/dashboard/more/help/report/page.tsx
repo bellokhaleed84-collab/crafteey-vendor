@@ -67,7 +67,7 @@ export default function VendorReportPage() {
                 onClick={() => setCategory(value)}
                 aria-pressed={selected}
                 className={`flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-2 py-3 text-center text-sm font-semibold ${
-                  selected ? "border-brand bg-brand-light text-ink" : "border-surface-border bg-white text-ink-muted"
+                  selected ? "border-brand bg-brand-light text-ink" : "border-surface-border bg-surface text-ink-muted"
                 }`}
               >
                 <Icon size={20} />
@@ -86,7 +86,7 @@ export default function VendorReportPage() {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Tell us in your own words"
-          className="w-full resize-none rounded-2xl border border-surface-border bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"
+          className="w-full resize-none rounded-2xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-brand"
         />
         <p className="text-xs text-ink-faint">Please do not put passwords or card details here.</p>
       </section>

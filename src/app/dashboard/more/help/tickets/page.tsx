@@ -85,7 +85,7 @@ export default function VendorTicketsPage() {
             <Link
               key={r.id}
               href={`/dashboard/more/help/tickets/${r.id}`}
-              className="flex items-center gap-3 rounded-2xl border border-surface-border bg-white p-4"
+              className="flex items-center gap-3 rounded-2xl border border-surface-border bg-surface p-4"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
