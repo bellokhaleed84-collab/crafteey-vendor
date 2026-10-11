@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NativeSplash from "@/components/NativeSplash";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ThemeSync from "@/components/ThemeSync";
 import { DEFAULT_THEME, THEME_KEY } from "@/lib/theme";
@@ -23,6 +24,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
       <body>
+        <NativeSplash />
         <ThemeSync />
         <AuthProvider>{children}</AuthProvider>
       </body>

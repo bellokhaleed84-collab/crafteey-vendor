@@ -29,7 +29,15 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
-
+    <!-- Permissions (Android asks for each one the first time it is used) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Phones without a camera or GPS can still install the app -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>
