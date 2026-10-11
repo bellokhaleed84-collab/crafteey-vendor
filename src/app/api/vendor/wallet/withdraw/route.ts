@@ -6,7 +6,7 @@ import VendorPayout from "@/models/VendorPayout";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { getLinkedHubVendor } from "@/lib/hubVendor";
 import { lagosDayString, lagosWeekday } from "@/lib/lagosTime";
-import { WITHDRAWAL_WEEKDAYS, WEEKDAY_NAMES, MIN_PAYOUT_KOBO, anyDayAllowed } from "@/lib/payoutRules";
+import { WITHDRAWAL_WEEKDAYS, MIN_PAYOUT_KOBO, anyDayAllowed } from "@/lib/payoutRules";
 import { computeBalance } from "@/lib/vendorBalance";
 import { syncOpenPayouts, markPaid, markFailed, markProcessing } from "@/lib/vendorPayoutSync";
 import { initiateTransfer, PaystackError } from "@/lib/paystack";
@@ -20,22 +20,29 @@ type BankDetails = {
   paystackRecipientCode?: string;
 };
 
-function daysLabel(): string {
-  const names = WITHDRAWAL_WEEKDAYS.map((d) => WEEKDAY_NAMES[d]);
-  if (names.length <= 1) return names.join("");
-  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-}
-
 function naira(kobo: number): string {
   return `\u20A6${(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
+// Body: { amountKobo: number }  (a whole number of kobo)
 // Owner only: staff have no Vendor record, so they get "Vendor not found".
 export async function POST(req: NextRequest) {
   try {
     const decoded = await verifyToken(req);
     await connectToDatabase();
     const uid = decoded.uid;
+
+    const body = await req.json().catch(() => null);
+    const requestedKobo = body?.amountKobo;
+    if (typeof requestedKobo !== "number" || !Number.isInteger(requestedKobo) || requestedKobo <= 0) {
+      return NextResponse.json({ error: "Enter a valid amount." }, { status: 400 });
+    }
+    if (requestedKobo < MIN_PAYOUT_KOBO) {
+      return NextResponse.json(
+        { error: `The minimum withdrawal is ${naira(MIN_PAYOUT_KOBO)}.` },
+        { status: 400 }
+      );
+    }
 
     const vendor = await Vendor.findOne({ uid })
       .select("bankDetails")
@@ -49,10 +56,7 @@ export async function POST(req: NextRequest) {
 
     const now = new Date();
     if (!anyDayAllowed() && !WITHDRAWAL_WEEKDAYS.includes(lagosWeekday(now))) {
-      return NextResponse.json(
-        { error: `Withdrawals are only on ${daysLabel()}.` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Withdrawals aren't available today." }, { status: 400 });
     }
 
     const hub = await getLinkedHubVendor(uid);
@@ -73,14 +77,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You can only withdraw once a day." }, { status: 409 });
     }
 
+    // The balance is worked out here on the server. The amount the phone sent
+    // is only a request and can never be more than this.
     const balance = await computeBalance(uid, hub._id);
-    const amountKobo = balance.availableKobo;
-    if (amountKobo < MIN_PAYOUT_KOBO) {
+    if (requestedKobo > balance.availableKobo) {
       return NextResponse.json(
-        { error: `The minimum withdrawal is ${naira(MIN_PAYOUT_KOBO)}.` },
+        { error: `You can withdraw up to ${naira(balance.availableKobo)}.` },
         { status: 400 }
       );
     }
+    const amountKobo = requestedKobo;
 
     // Save the payout BEFORE asking Paystack. The database allows only one
     // active payout and one per day, so a double tap cannot send twice.

@@ -39,7 +39,7 @@ function payoutLabel(status: string): { text: string; cls: string } {
   return { text: "Processing", cls: "text-ink-muted" };
 }
 
-// Why the Withdraw button can't be used right now, or null if it can.
+// Why Withdraw can't be used at all right now, or null if it can.
 function blockedReason(d: WalletData): string | null {
   if (!d.hasBankAccount) return "Add a bank account to withdraw.";
   if (d.processingKobo > 0) return "A withdrawal is being processed.";
@@ -49,11 +49,22 @@ function blockedReason(d: WalletData): string | null {
   return null;
 }
 
+// Keeps only digits and one dot, with at most 2 decimals.
+function cleanAmount(raw: string): string {
+  let v = raw.replace(/[^\d.]/g, "");
+  const parts = v.split(".");
+  if (parts.length > 2) v = parts[0] + "." + parts.slice(1).join("");
+  const p2 = v.split(".");
+  if (p2[1] !== undefined && p2[1].length > 2) v = p2[0] + "." + p2[1].slice(0, 2);
+  return v;
+}
+
 export default function WalletPage() {
   const { getToken } = useAuth();
   const [data, setData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [amountText, setAmountText] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -75,17 +86,32 @@ export default function WalletPage() {
     load();
   }, [load]);
 
+  const typed = amountText === "" || amountText === "." ? NaN : Number(amountText);
+  const amountKobo = Number.isFinite(typed) ? Math.round(typed * 100) : 0;
+
+  let amountProblem: string | null = null;
+  if (data && amountText !== "") {
+    if (!Number.isFinite(typed) || amountKobo <= 0) amountProblem = "Enter a valid amount.";
+    else if (amountKobo < data.rules.minPayoutKobo) amountProblem = `Minimum is ${naira(data.rules.minPayoutKobo)}.`;
+    else if (amountKobo > data.availableKobo) amountProblem = `You can withdraw up to ${naira(data.availableKobo)}.`;
+  }
+  const amountOk = amountKobo > 0 && amountProblem === null;
+
   const withdraw = async () => {
-    if (submitting) return;
+    if (submitting || !amountOk) return;
     setSubmitting(true);
     setError(null);
     setNotice(null);
     try {
-      const res = await apiFetch(getToken, "/api/vendor/wallet/withdraw", { method: "POST" });
+      const res = await apiFetch(getToken, "/api/vendor/wallet/withdraw", {
+        method: "POST",
+        body: JSON.stringify({ amountKobo }),
+      });
       if (!res.ok) {
         setError(await readError(res, "The withdrawal could not be sent."));
       } else {
         const out = await res.json();
+        setAmountText("");
         setNotice(
           out.status === "paid"
             ? "Your withdrawal was sent to your bank."
@@ -113,7 +139,7 @@ export default function WalletPage() {
       <div className="max-w-lg space-y-5">
         <Skeleton className="h-6 w-28" />
         <Skeleton className="h-32 rounded-2xl" />
-        <Skeleton className="h-12 rounded-xl" />
+        <Skeleton className="h-28 rounded-2xl" />
         <div className="grid grid-cols-2 gap-3">
           <Skeleton className="h-20 rounded-2xl" />
           <Skeleton className="h-20 rounded-2xl" />
@@ -163,26 +189,53 @@ export default function WalletPage() {
         <p className="mt-1 text-xs text-ink-faint">Minimum withdrawal: {naira(rules.minPayoutKobo)}</p>
       </Card>
 
-      {!confirming ? (
-        <div>
+      {blocked ? (
+        <p className="rounded-xl bg-surface-muted p-3 text-center text-sm text-ink-muted">{blocked}</p>
+      ) : !confirming ? (
+        <Card className="space-y-3 p-4">
+          <label className="block text-xs font-semibold text-ink-muted">Amount to withdraw</label>
+          <div className="flex items-center gap-2 rounded-xl border border-surface-border bg-white px-3">
+            <span className="text-lg font-bold text-ink">{"\u20A6"}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0"
+              value={amountText}
+              onChange={(e) => setAmountText(cleanAmount(e.target.value))}
+              className="w-full bg-transparent py-3.5 text-lg font-bold text-ink outline-none"
+            />
+          </div>
+          {amountProblem ? (
+            <p className="text-xs text-status-danger">{amountProblem}</p>
+          ) : (
+            <p className="text-xs text-ink-faint">
+              Between {naira(rules.minPayoutKobo)} and {naira(data.availableKobo)}.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => setAmountText(String(data.availableKobo / 100))}
+            className="text-xs font-semibold text-brand-dark"
+          >
+            Withdraw all ({naira(data.availableKobo)})
+          </button>
           <button
             onClick={() => {
               setNotice(null);
               setError(null);
               setConfirming(true);
             }}
-            disabled={blocked !== null}
+            disabled={!amountOk}
             className="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-50"
           >
-            Withdraw {naira(data.availableKobo)}
+            {amountOk ? `Withdraw ${naira(amountKobo)}` : "Withdraw"}
           </button>
-          {blocked && <p className="mt-2 text-center text-xs text-ink-muted">{blocked}</p>}
-        </div>
+        </Card>
       ) : (
         <Card className="space-y-3 p-4">
           <p className="text-sm text-ink">
-            Send <b>{naira(data.availableKobo)}</b> to{" "}
-            <b>{data.bank?.accountName}</b> ({data.bank?.bankName} {"\u2022\u2022\u2022\u2022"}
+            Send <b>{naira(amountKobo)}</b> to <b>{data.bank?.accountName}</b> ({data.bank?.bankName}{" "}
+            {"\u2022\u2022\u2022\u2022"}
             {data.bank?.last4})?
           </p>
           <p className="text-xs text-ink-muted">You can only withdraw once a day.</p>
