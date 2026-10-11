@@ -30,6 +30,8 @@ export interface IVendor {
     promotions: boolean;
     system: boolean;
   };
+  // Notifications newer than this count as unread.
+  notificationsSeenAt?: Date;
   verificationDocUrl?: string; // CAC doc or ID
   tier?: VendorTier; // chosen at registration; copied to HubVendor.tier
   tierRequest?: {
@@ -94,6 +96,7 @@ const VendorSchema = new Schema<IVendor>(
       promotions: { type: Boolean, default: true },
       system: { type: Boolean, default: true }
     },
+    notificationsSeenAt: { type: Date },
     verificationDocUrl: { type: String },
     tier: { type: String, enum: ["basic", "regular", "premium"] },
     tierRequest: { type: TierRequestSchema },

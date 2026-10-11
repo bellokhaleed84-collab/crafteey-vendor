@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight } from "lucide-react";
+import { BadgeCheck, Bell, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -74,6 +74,7 @@ export default function DashboardOverviewPage() {
   const [vendor, setVendor] = useState<VendorSummary | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [productCount, setProductCount] = useState(0);
+  const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -102,6 +103,14 @@ export default function DashboardOverviewPage() {
       setLoadError(err instanceof Error ? err.message : "Couldn't load your dashboard.");
     } finally {
       setLoading(false);
+    }
+
+    // The bell count is an extra. If it fails, the bell just shows no number.
+    try {
+      const res = await apiFetch(getToken, "/api/vendor/notifications?countOnly=1");
+      if (res.ok) setUnread(Number((await res.json()).unreadCount ?? 0));
+    } catch {
+      /* ignore */
     }
   }, [getToken]);
 
@@ -142,9 +151,23 @@ export default function DashboardOverviewPage() {
             </p>
           )}
         </div>
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-light text-base font-bold text-brand-dark">
-          {(vendor?.businessName ?? "C").charAt(0).toUpperCase()}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/dashboard/notifications"
+            aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+            className="relative flex h-12 w-12 items-center justify-center rounded-full border border-surface-border bg-white text-ink"
+          >
+            <Bell size={20} />
+            {unread > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-status-danger px-1 text-[10px] font-bold text-white">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
+          </Link>
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-light text-base font-bold text-brand-dark">
+            {(vendor?.businessName ?? "C").charAt(0).toUpperCase()}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -213,7 +236,10 @@ function DashboardSkeleton() {
           <Skeleton className="h-5 w-44" />
           <Skeleton className="h-3.5 w-24" />
         </div>
-        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <Skeleton className="h-12 w-12 rounded-full" />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <SkeletonStatCard />

@@ -81,15 +81,16 @@ export default function MorePage() {
           </div>
           <ChevronRight size={18} className="shrink-0 text-ink-faint" />
         </Link>
-        <div className="flex items-center gap-3 p-4 opacity-50">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-ink-faint">
+        <Link href="/dashboard/more/help" className="flex items-center gap-3 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
             <LifeBuoy size={18} />
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-ink">Help & support</p>
-            <p className="text-xs text-ink-muted">Coming soon</p>
+            <p className="text-xs text-ink-muted">Chat with us, FAQs, call</p>
           </div>
-        </div>
+          <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+        </Link>
       </Card>
 
       <button
