@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Check, Phone, Bike } from "lucide-react";
+import { ChevronLeft, Check, Phone, Bike, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreAccess } from "@/contexts/StoreRoleContext";
 import { apiFetch, readError } from "@/lib/apiClient";
@@ -35,6 +35,11 @@ interface Rider {
   firstName: string;
   phone: string;
   status: string;
+}
+
+interface Customer {
+  name: string;
+  phone: string;
 }
 
 const STAGE_LABELS: Record<Stage, string> = {
@@ -92,6 +97,7 @@ export default function OrderDetailPage() {
   const { role } = useStoreAccess();
   const [order, setOrder] = useState<Order | null>(null);
   const [rider, setRider] = useState<Rider | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -105,6 +111,17 @@ export default function OrderDetailPage() {
       setRider(data.rider ?? null);
     } catch {
       // The rider card is optional; ignore failures.
+    }
+  }, [getToken, id]);
+
+  const loadCustomer = useCallback(async () => {
+    try {
+      const res = await apiFetch(getToken, `/api/orders/${id}/customer`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setCustomer(data.customer ?? null);
+    } catch {
+      // The customer card is optional; ignore failures.
     }
   }, [getToken, id]);
 
@@ -126,7 +143,8 @@ export default function OrderDetailPage() {
       setLoading(false);
     }
     loadRider();
-  }, [getToken, id, loadRider]);
+    loadCustomer();
+  }, [getToken, id, loadRider, loadCustomer]);
 
   useEffect(() => {
     load();
@@ -180,6 +198,7 @@ export default function OrderDetailPage() {
   const cancelled = order.stage === "cancelled";
   const trailIndex = TRAIL.findIndex((t) => t.stage === order.stage);
   const showRider = !!rider && !cancelled && order.stage !== "delivered";
+  const showCustomer = !!customer && !cancelled && order.stage !== "delivered";
 
   return (
     <div className="max-w-lg space-y-5">
@@ -207,6 +226,27 @@ export default function OrderDetailPage() {
           {STAGE_LABELS[order.stage]}
         </span>
       </div>
+
+      {showCustomer && customer && (
+        <Card className="flex items-center gap-3 p-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-light text-brand-dark">
+            <User size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-ink-muted">Customer</p>
+            <p className="truncate font-bold text-ink">{customer.name}</p>
+            {customer.phone && <p className="truncate text-xs text-ink-muted">{customer.phone}</p>}
+          </div>
+          {customer.phone && (
+            <a
+              href={`tel:${customer.phone}`}
+              className="flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-brand-ink"
+            >
+              <Phone size={16} /> Call
+            </a>
+          )}
+        </Card>
+      )}
 
       {showRider && rider && (
         <Card className="flex items-center gap-3 p-4">
