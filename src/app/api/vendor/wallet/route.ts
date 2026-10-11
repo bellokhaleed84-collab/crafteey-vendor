@@ -11,6 +11,7 @@ import {
   WEEKDAY_NAMES,
   MIN_PAYOUT_KOBO,
   anyDayAllowed,
+  daysLabel,
 } from "@/lib/payoutRules";
 import { computeBalance } from "@/lib/vendorBalance";
 import { syncOpenPayouts } from "@/lib/vendorPayoutSync";
@@ -18,12 +19,6 @@ import { syncOpenPayouts } from "@/lib/vendorPayoutSync";
 export const dynamic = "force-dynamic";
 
 type BankDetails = { accountName?: string; bankName?: string; accountNumber?: string; paystackRecipientCode?: string };
-
-function daysLabel(): string {
-  const names = WITHDRAWAL_WEEKDAYS.map((d) => WEEKDAY_NAMES[d]);
-  if (names.length <= 1) return names.join("");
-  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-}
 
 function nextDayName(today: number): string {
   for (let i = 1; i <= 7; i++) {
