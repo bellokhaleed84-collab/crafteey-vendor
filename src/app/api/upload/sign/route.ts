@@ -5,6 +5,7 @@ import { generateUploadSignature, CLOUD_NAME } from "@/lib/cloudinary";
 const FOLDERS = {
   product: "crafteey/vendor-products",
   logo: "crafteey/vendor-logos",
+  document: "crafteey/vendor-documents",
 } as const;
 
 export async function POST(req: NextRequest) {
@@ -16,10 +17,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Image upload isn't configured" }, { status: 500 });
     }
 
-    // Optional body: { kind: "logo" }. No body (existing product uploads)
-    // falls back to the product folder.
+    // Optional body: { kind: "logo" | "document" }. No body (existing product
+    // uploads) falls back to the product folder.
     const body = await req.json().catch(() => null);
-    const folder = body?.kind === "logo" ? FOLDERS.logo : FOLDERS.product;
+    const folder =
+      body?.kind === "logo"
+        ? FOLDERS.logo
+        : body?.kind === "document"
+          ? FOLDERS.document
+          : FOLDERS.product;
 
     const { timestamp, signature } = generateUploadSignature({ folder });
     return NextResponse.json({ cloudName: CLOUD_NAME, apiKey, timestamp, signature, folder });

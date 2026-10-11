@@ -32,7 +32,18 @@ export interface IVendor {
   };
   // Notifications newer than this count as unread.
   notificationsSeenAt?: Date;
-  verificationDocUrl?: string; // CAC doc or ID
+  verificationDocUrl?: string; // newest uploaded document (kept for the admin app)
+  businessDocuments?: {
+    type: "cac" | "id" | "other";
+    url: string; // Cloudinary link
+    uploadedAt: Date;
+  }[];
+  // Why the last application was rejected, or why the store was suspended.
+  rejectionReason?: string;
+  // Set when a rejected vendor sends a new document and goes back to Pending.
+  resubmittedAt?: Date | null;
+  // Note for riders, shown at pickup. Copied to HubVendor.pickupInstructions.
+  pickupInstructions?: string;
   tier?: VendorTier; // chosen at registration; copied to HubVendor.tier
   tierRequest?: {
     requestedTier: VendorTier;
@@ -40,7 +51,7 @@ export interface IVendor {
     requestedAt: Date;
   };
   status: "pending" | "approved" | "rejected" | "suspended";
-  isApproved: boolean; // manual approval switch, flipped to true by you
+  isApproved: boolean; // follows status; set by the admin app
   isOpen: boolean; // manual open/close toggle
   rating: number;
   ratingCount: number;
@@ -57,6 +68,12 @@ const BusinessHourSchema = new Schema(
   },
   { _id: false }
 );
+
+const BusinessDocumentSchema = new Schema({
+  type: { type: String, enum: ["cac", "id", "other"], required: true },
+  url: { type: String, required: true },
+  uploadedAt: { type: Date, default: Date.now }
+});
 
 const TierRequestSchema = new Schema(
   {
@@ -98,6 +115,10 @@ const VendorSchema = new Schema<IVendor>(
     },
     notificationsSeenAt: { type: Date },
     verificationDocUrl: { type: String },
+    businessDocuments: { type: [BusinessDocumentSchema], default: [] },
+    rejectionReason: { type: String, maxlength: 300 },
+    resubmittedAt: { type: Date },
+    pickupInstructions: { type: String, maxlength: 200 },
     tier: { type: String, enum: ["basic", "regular", "premium"] },
     tierRequest: { type: TierRequestSchema },
     status: {

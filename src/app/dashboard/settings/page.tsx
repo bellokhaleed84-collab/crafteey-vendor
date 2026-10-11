@@ -117,58 +117,83 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card className="divide-y divide-surface-border">
-        <SettingsRow
-          href="/dashboard/settings/profile"
-          icon={Store}
-          label="Store Information"
-          hint="Name, phone, category, description"
-        />
-        <SettingsRow
-          href="/dashboard/settings/location"
-          icon={MapPin}
-          label="Location & Map"
-          hint="Pin your pickup coordinates"
-        />
-        <SettingsRow
-          href="/dashboard/settings/bank-account"
-          icon={Landmark}
-          label="Bank Account"
-          hint="Where your earnings are paid"
-        />
-        <SettingsRow
-          href="/dashboard/settings/tier"
-          icon={Award}
-          label="Store Tier"
-          hint="Commission and Hub visibility"
-        />
-        <SettingsRow
-          href="/dashboard/settings/staff"
-          icon={Users}
-          label="Staff"
-          hint="Let your team receive orders"
-        />
-        <SettingsRow
-          href="/dashboard/settings/hours"
-          icon={Clock}
-          label="Opening Hours"
-          hint="When you open and close each day"
-        />
-        <SettingsRow
-          href="/dashboard/settings/notifications"
-          icon={Bell}
-          label="Notification Settings"
-          hint="Orders, promotions and system alerts"
-        />
-        <SettingsRow
-          href="/dashboard/settings/privacy"
-          icon={ShieldCheck}
-          label="Privacy & Security"
-          hint="Change your password"
-        />
-        <ComingSoonRow icon={Navigation} label="Pickup Instructions" hint="Notes for riders" />
-        <ComingSoonRow icon={FileText} label="Business Documents" hint="CAC, ID and verification" />
-      </Card>
+      <section className="space-y-2">
+        <h2 className="px-1 text-xs font-bold uppercase tracking-wide text-ink-faint">Your store</h2>
+        <Card className="divide-y divide-surface-border">
+          <SettingsRow
+            href="/dashboard/settings/profile"
+            icon={Store}
+            label="Store Information"
+            hint="Name, phone, category, description"
+          />
+          <SettingsRow
+            href="/dashboard/settings/location"
+            icon={MapPin}
+            label="Location & Map"
+            hint="Pin your pickup coordinates"
+          />
+          <SettingsRow
+            href="/dashboard/settings/hours"
+            icon={Clock}
+            label="Opening Hours"
+            hint="When you open and close each day"
+          />
+          <SettingsRow
+            href="/dashboard/settings/pickup"
+            icon={Navigation}
+            label="Pickup Instructions"
+            hint="A short note for riders"
+          />
+          <SettingsRow
+            href="/dashboard/settings/documents"
+            icon={FileText}
+            label="Business Documents"
+            hint="CAC, ID and verification"
+          />
+        </Card>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="px-1 text-xs font-bold uppercase tracking-wide text-ink-faint">Money and plan</h2>
+        <Card className="divide-y divide-surface-border">
+          <SettingsRow
+            href="/dashboard/settings/bank-account"
+            icon={Landmark}
+            label="Bank Account"
+            hint="Where your earnings are paid"
+          />
+          <SettingsRow
+            href="/dashboard/settings/tier"
+            icon={Award}
+            label="Store Tier"
+            hint="Commission and Hub visibility"
+          />
+        </Card>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="px-1 text-xs font-bold uppercase tracking-wide text-ink-faint">Team and account</h2>
+        <Card className="divide-y divide-surface-border">
+          <SettingsRow
+            href="/dashboard/settings/staff"
+            icon={Users}
+            label="Staff"
+            hint="Let your team receive orders"
+          />
+          <SettingsRow
+            href="/dashboard/settings/notifications"
+            icon={Bell}
+            label="Notification Settings"
+            hint="Orders, promotions and system alerts"
+          />
+          <SettingsRow
+            href="/dashboard/settings/privacy"
+            icon={ShieldCheck}
+            label="Privacy & Security"
+            hint="Change your password"
+          />
+        </Card>
+      </section>
 
       <Card className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
@@ -186,7 +211,7 @@ export default function SettingsPage() {
           onClick={toggleOpen}
           disabled={saving || !isVendorApproved(vendor)}
           title={!isVendorApproved(vendor) ? "Your store must be approved before it can open." : undefined}
-          className={`rounded-full px-4 py-2 text-xs font-bold disabled:opacity-50 ${
+          className={`min-h-11 rounded-full px-5 py-2 text-xs font-bold disabled:opacity-50 ${
             vendor.isOpen ? "bg-status-success-bg text-status-success" : "bg-surface-muted text-ink-muted"
           }`}
         >
@@ -209,7 +234,7 @@ function SettingsRow({
   hint: string;
 }) {
   return (
-    <Link href={href} className="flex items-center gap-3 p-4">
+    <Link href={href} className="flex min-h-16 items-center gap-3 p-4">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
         <Icon size={18} />
       </span>
@@ -222,36 +247,14 @@ function SettingsRow({
   );
 }
 
-function ComingSoonRow({
-  icon: Icon,
-  label,
-  hint,
-}: {
-  icon: typeof Store;
-  label: string;
-  hint: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 p-4 opacity-50">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-ink-faint">
-        <Icon size={18} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-ink">{label}</p>
-        <p className="text-xs text-ink-muted">
-          {hint} {"\u2022"} coming soon
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function SettingsSkeleton() {
   return (
     <div className="max-w-lg space-y-5">
       <Skeleton className="h-6 w-32" />
       <Skeleton className="h-16 rounded-2xl" />
-      <Skeleton className="h-64 rounded-2xl" />
+      <Skeleton className="h-72 rounded-2xl" />
+      <Skeleton className="h-36 rounded-2xl" />
+      <Skeleton className="h-52 rounded-2xl" />
       <Skeleton className="h-16 rounded-2xl" />
     </div>
   );

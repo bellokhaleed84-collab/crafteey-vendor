@@ -32,6 +32,10 @@ export interface IHubVendor {
   isActive: boolean;
   isSeed?: boolean;
   tier: VendorTier;
+  /** Phone notification tokens (order alerts). One device belongs to one vendor. */
+  pushTokens?: string[];
+  /** Note for riders at pickup, e.g. "Use the side gate". */
+  pickupInstructions?: string;
 }
 
 const HubVendorSchema = new Schema<IHubVendor>(
@@ -61,6 +65,8 @@ const HubVendorSchema = new Schema<IHubVendor>(
     isActive: { type: Boolean, default: true },
     isSeed: { type: Boolean, default: false },
     tier: { type: String, enum: ["basic", "regular", "premium"], default: "regular", index: true },
+    pushTokens: { type: [String], default: [] },
+    pickupInstructions: { type: String, maxlength: 200 },
   },
   { timestamps: true }
 );
