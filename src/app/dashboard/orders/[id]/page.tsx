@@ -24,8 +24,21 @@ interface Order {
   _id: string;
   orderNumber: string;
   stage: Stage;
-  items: { name: string; quantity: number; unitPrice: number; options?: OrderOption[] }[];
+  items: {
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    /** promotion discount on this whole line (0 = none) */
+    discount?: number;
+    promoLabel?: string;
+    options?: OrderOption[];
+  }[];
+  /** after promotions */
   subtotal: number;
+  /** before promotions */
+  grossSubtotal?: number;
+  /** total promotion discount */
+  discount?: number;
   /** Not sent to staff. */
   vendorPayout?: number;
   placedAt: string;
@@ -199,6 +212,7 @@ export default function OrderDetailPage() {
   const trailIndex = TRAIL.findIndex((t) => t.stage === order.stage);
   const showRider = !!rider && !cancelled && order.stage !== "delivered";
   const showCustomer = !!customer && !cancelled && order.stage !== "delivered";
+  const hasDiscount = (order.discount ?? 0) > 0;
 
   return (
     <div className="max-w-lg space-y-5">
@@ -318,6 +332,14 @@ export default function OrderDetailPage() {
                   </span>
                 </div>
 
+                {(item.discount ?? 0) > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-status-success">
+                    {item.promoLabel || "Promotion"} {"\u2212"}
+                    {"\u20A6"}
+                    {(item.discount ?? 0).toLocaleString()}
+                  </p>
+                )}
+
                 {groups.length > 0 && (
                   <div className="mt-2 space-y-1.5 rounded-xl bg-surface-muted p-2.5">
                     {item.quantity > 1 && (
@@ -353,6 +375,25 @@ export default function OrderDetailPage() {
               </div>
             );
           })}
+          {hasDiscount && (
+            <>
+              <div className="flex justify-between p-3.5 text-sm text-ink-muted">
+                <span>Items total</span>
+                <span>
+                  {"\u20A6"}
+                  {(order.grossSubtotal ?? order.subtotal).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between p-3.5 text-sm font-semibold text-status-success">
+                <span>Promotion discount</span>
+                <span>
+                  {"\u2212"}
+                  {"\u20A6"}
+                  {(order.discount ?? 0).toLocaleString()}
+                </span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between p-3.5 text-sm text-ink-muted">
             <span>Items subtotal</span>
             <span>

@@ -26,8 +26,16 @@ export interface IHubOrder {
     unitPriceKobo: number;
     quantity: number;
     options?: IHubOrderOption[];
+    /** promotion discount on this whole line, in kobo */
+    discountKobo?: number;
+    promoLabel?: string;
   }[];
+  /** AFTER promotions */
   subtotalKobo: number;
+  /** before promotions (only set when a promotion applied) */
+  grossSubtotalKobo?: number;
+  /** total promotion discount (only set when a promotion applied) */
+  discountKobo?: number;
   deliveryFeeKobo: number;
   totalKobo: number;
   vendorTier: "basic" | "regular" | "premium";
@@ -76,9 +84,13 @@ const HubOrderSchema = new Schema<IHubOrder>(
             imageUrl: String,
           },
         ],
+        discountKobo: { type: Number, min: 0 },
+        promoLabel: String,
       },
     ],
     subtotalKobo: { type: Number, required: true },
+    grossSubtotalKobo: Number,
+    discountKobo: Number,
     deliveryFeeKobo: { type: Number, required: true },
     totalKobo: { type: Number, required: true },
     vendorTier: { type: String, enum: ["basic", "regular", "premium"], required: true },

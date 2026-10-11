@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Bell, ChevronRight } from "lucide-react";
+import { BadgeCheck, Bell, ChevronRight, Tag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -176,6 +176,20 @@ export default function DashboardOverviewPage() {
         <StatCard label="Pending Orders" value={String(pendingCount)} />
         <StatCard label="Total Products" value={String(productCount)} />
       </div>
+
+      <Link
+        href="/dashboard/promotions"
+        className="flex items-center gap-3 rounded-2xl bg-brand-light p-4"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-ink">
+          <Tag size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-ink">Boost your sales</p>
+          <p className="text-xs text-ink-muted">Run a promotion and get more orders</p>
+        </div>
+        <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+      </Link>
 
       <div>
         <div className="mb-3 flex items-center justify-between">

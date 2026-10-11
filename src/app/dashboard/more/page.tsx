@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Settings, LogOut, ChevronRight, LifeBuoy, BadgeCheck } from "lucide-react";
+import { Settings, LogOut, ChevronRight, LifeBuoy, BadgeCheck, Tag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -71,6 +71,16 @@ export default function MorePage() {
       )}
 
       <Card className="divide-y divide-surface-border">
+        <Link href="/dashboard/promotions" className="flex items-center gap-3 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+            <Tag size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ink">Promotions</p>
+            <p className="text-xs text-ink-muted">Discounts and special offers</p>
+          </div>
+          <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+        </Link>
         <Link href="/dashboard/settings" className="flex items-center gap-3 p-4">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
             <Settings size={18} />

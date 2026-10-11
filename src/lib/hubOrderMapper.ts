@@ -17,7 +17,8 @@ export function orderStage(
 
 type OrderDoc = IHubOrder & { _id: unknown };
 
-// Customer contact and delivery address are deliberately left out: riders handle delivery.
+// Customer address is deliberately left out: riders handle delivery.
+// (Customer name and phone are served by their own route, api/orders/[id]/customer.)
 export function toVendorOrder(o: OrderDoc) {
   return {
     _id: String(o._id),
@@ -28,6 +29,9 @@ export function toVendorOrder(o: OrderDoc) {
       quantity: i.quantity,
       imageUrl: i.imageUrl ?? "",
       unitPrice: i.unitPriceKobo / 100,
+      // Promotion on this line, if any. Older orders have none.
+      discount: (i.discountKobo ?? 0) / 100,
+      promoLabel: i.promoLabel ?? "",
       // Extras and portion picked for ONE plate. Older orders have none.
       options: (i.options ?? []).map((op) => ({
         groupName: op.groupName ?? "",
@@ -36,7 +40,11 @@ export function toVendorOrder(o: OrderDoc) {
         imageUrl: op.imageUrl ?? "",
       })),
     })),
+    // After promotions. This is what the payout is worked out from.
     subtotal: o.subtotalKobo / 100,
+    // Before promotions and the total discount (0 when no promotion applied).
+    grossSubtotal: (o.grossSubtotalKobo ?? o.subtotalKobo) / 100,
+    discount: (o.discountKobo ?? 0) / 100,
     vendorPayout: o.vendorPayoutKobo / 100,
     placedAt: o.payment?.paidAt ?? o.createdAt,
   };
