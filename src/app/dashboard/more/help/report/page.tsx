@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, CreditCard, ClipboardList, Smartphone, User, HelpCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 
-const OPTIONS: { value: string; label: string; icon: ComponentType<{ size?: number }> }[] = [
+const OPTIONS: { value: string; label: string; icon: LucideIcon }[] = [
   { value: "payment", label: "Payments or payouts", icon: CreditCard },
   { value: "order", label: "An order", icon: ClipboardList },
   { value: "app", label: "App not working", icon: Smartphone },
