@@ -78,7 +78,7 @@ export default function VendorGuard({ children }: { children: ReactNode }) {
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-surface px-6">
+      <main className="flex min-h-screen items-center justify-center bg-page px-6">
         <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{error}</p>
       </main>
     );
@@ -90,7 +90,7 @@ export default function VendorGuard({ children }: { children: ReactNode }) {
 
   if (state !== "ready") {
     return (
-      <main className="min-h-screen bg-surface p-5">
+      <main className="min-h-screen bg-page p-5">
         <div className="mx-auto max-w-3xl space-y-4">
           <Skeleton className="h-12 w-48 rounded-xl" />
           <div className="grid grid-cols-2 gap-3">

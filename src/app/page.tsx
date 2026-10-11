@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyVendor, routeForVendor } from "@/lib/vendorApi";
 
-export default function SplashPage() {
+// Start page. It shows nothing of its own (just the splash purple) while it
+// checks the login and sends the person to the right screen.
+export default function StartPage() {
   const { user, loading, getToken } = useAuth();
   const router = useRouter();
   const routed = useRef(false);
@@ -35,18 +37,5 @@ export default function SplashPage() {
     })();
   }, [loading, user, getToken, router]);
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-navy px-6">
-      <div className="flex flex-col items-center gap-5">
-        <div className="flex h-28 w-28 items-center justify-center rounded-[32px] bg-surface text-6xl font-black text-navy">
-          C
-        </div>
-        <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white">crafteey</h1>
-          <p className="mt-1 text-xl font-light tracking-wide text-white/90">vendors</p>
-        </div>
-      </div>
-      <p className="absolute bottom-16 text-xs text-white/50">Powering great local businesses</p>
-    </main>
-  );
+  return <main className="min-h-screen" style={{ background: "#2A025E" }} />;
 }

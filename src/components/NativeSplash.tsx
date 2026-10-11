@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 import { SplashScreen } from "@capacitor/splash-screen";
+import { SPLASH_PURPLE, setSplashActive, syncStatusBar } from "@/lib/statusBar";
 
-const BG = "#2A025E";
+const BG = SPLASH_PURPLE;
 const SEEN_KEY = "crafteey-splash-seen";
-const EXIT_AT = 1900; // ms after the logo is on screen
-const REMOVE_AT = 2450;
+const MIN_SHOW = 1900; // ms the logo stays after it appears
+const MAX_SHOW = 9000; // never stay longer than this, even if routing is slow
+const FADE = 450;
 
 const CSS = `
 @keyframes cfGlow{0%{opacity:0;transform:scale(.85)}50%{opacity:1}100%{opacity:.6;transform:scale(1.05)}}
@@ -15,14 +18,19 @@ const CSS = `
 @media (prefers-reduced-motion: reduce){.cf-anim{animation:none !important}}
 `;
 
-// Shown once per app launch, inside the Android app only. It picks up exactly
-// where the still purple screen stops, so there is no visible jump.
+// Inside the Android app only. Shows the animated logo, stays until the app has
+// moved on from the start page ("/"), then fades into the real screen.
+// Also keeps the phone's status bar matching the page in Light and Dark mode.
 export default function NativeSplash() {
+  const pathname = usePathname();
   const [show, setShow] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [minDone, setMinDone] = useState(false);
+  const [forced, setForced] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const started = useRef(false);
 
+  // Start (once per app launch)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     try {
@@ -35,14 +43,24 @@ export default function NativeSplash() {
       // storage blocked: just show it
     }
     setShow(true);
+    setSplashActive(true);
+  }, []);
+
+  // Status bar follows Light / Dark / Auto
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    syncStatusBar();
+    const mo = new MutationObserver(() => syncStatusBar());
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => mo.disconnect();
   }, []);
 
   const begin = useCallback(() => {
     if (started.current) return;
     started.current = true;
     SplashScreen.hide({ fadeOutDuration: 0 }).catch(() => {});
-    window.setTimeout(() => setLeaving(true), EXIT_AT);
-    window.setTimeout(() => setShow(false), REMOVE_AT);
+    window.setTimeout(() => setMinDone(true), MIN_SHOW);
+    window.setTimeout(() => setForced(true), MAX_SHOW);
   }, []);
 
   useEffect(() => {
@@ -52,6 +70,16 @@ export default function NativeSplash() {
     const safety = window.setTimeout(begin, 1500);
     return () => window.clearTimeout(safety);
   }, [show, begin]);
+
+  // Leave when the minimum time has passed AND the app has left "/" (or the safety limit hit)
+  const routeReady = pathname !== "/";
+  useEffect(() => {
+    if (!show || leaving) return;
+    if (!(minDone && (routeReady || forced))) return;
+    setLeaving(true);
+    setSplashActive(false);
+    window.setTimeout(() => setShow(false), FADE);
+  }, [show, leaving, minDone, routeReady, forced]);
 
   if (!show) return null;
 
@@ -74,7 +102,7 @@ export default function NativeSplash() {
         justifyContent: "center",
         overflow: "hidden",
         opacity: leaving ? 0 : 1,
-        transition: "opacity 450ms ease-out",
+        transition: "opacity " + FADE + "ms ease-out",
         pointerEvents: leaving ? "none" : "auto",
       }}
     >
@@ -97,7 +125,7 @@ export default function NativeSplash() {
           position: "relative",
           width: box,
           transform: leaving ? "scale(1.12)" : "scale(1)",
-          transition: "transform 450ms ease-out",
+          transition: "transform " + FADE + "ms ease-out",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

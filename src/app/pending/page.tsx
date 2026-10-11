@@ -139,7 +139,7 @@ export default function PendingPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-surface px-5 py-8">
+    <main className="min-h-screen bg-page px-5 py-8">
       <div className="mx-auto w-full max-w-sm space-y-5">
         {checking && !vendor && !missing ? (
           <div className="space-y-3">
