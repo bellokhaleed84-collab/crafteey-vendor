@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   Bell,
   ShieldCheck,
+  Landmark,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
@@ -128,6 +129,12 @@ export default function SettingsPage() {
           icon={MapPin}
           label="Location & Map"
           hint="Pin your pickup coordinates"
+        />
+        <SettingsRow
+          href="/dashboard/settings/bank-account"
+          icon={Landmark}
+          label="Bank Account"
+          hint="Where your earnings are paid"
         />
         <SettingsRow
           href="/dashboard/settings/tier"

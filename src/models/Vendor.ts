@@ -22,6 +22,8 @@ export interface IVendor {
     accountName: string;
     accountNumber: string;
     bankName: string;
+    bankCode?: string;
+    paystackRecipientCode?: string;
   };
   notificationPrefs?: {
     newOrders: boolean;
@@ -83,7 +85,9 @@ const VendorSchema = new Schema<IVendor>(
     bankDetails: {
       accountName: { type: String },
       accountNumber: { type: String },
-      bankName: { type: String }
+      bankName: { type: String },
+      bankCode: { type: String },
+      paystackRecipientCode: { type: String }
     },
     notificationPrefs: {
       newOrders: { type: Boolean, default: true },
