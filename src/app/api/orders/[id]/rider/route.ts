@@ -12,7 +12,10 @@ type Ctx = { params: { id: string } };
 const ACTIVE = ["accepted", "picked_up", "en_route"];
 
 // Returns the rider's first name and phone for one of THIS store's orders.
-// Customer details are never returned.
+// While the rider is still heading to the store ("accepted"), it also returns
+// the pickup code, so the vendor can check it matches what the rider says
+// before handing over the order. Once the order is picked up the code is no
+// longer sent. Customer details are never returned.
 export async function GET(req: NextRequest, { params }: Ctx) {
   try {
     const decoded = await verifyToken(req);
@@ -30,12 +33,13 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     const job = await CourierRequest.findOne({ hubOrderId: String(order._id) })
-      .select("status courierUid courierName courierPhone")
+      .select("status courierUid courierName courierPhone pickupCode")
       .lean<{
         status?: string;
         courierUid?: string | null;
         courierName?: string | null;
         courierPhone?: string | null;
+        pickupCode?: string | null;
       } | null>();
 
     if (!job || !job.courierUid || !job.status || !ACTIVE.includes(job.status)) {
@@ -43,8 +47,9 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     }
 
     const firstName = (job.courierName ?? "").trim().split(/\s+/)[0] || "Your rider";
+    const pickupCode = job.status === "accepted" && job.pickupCode ? job.pickupCode : "";
     return NextResponse.json({
-      rider: { firstName, phone: job.courierPhone ?? "", status: job.status },
+      rider: { firstName, phone: job.courierPhone ?? "", status: job.status, pickupCode },
     });
   } catch (err) {
     if (err instanceof AuthError) {

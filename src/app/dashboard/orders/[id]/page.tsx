@@ -48,6 +48,8 @@ interface Rider {
   firstName: string;
   phone: string;
   status: string;
+  /** Only sent while the rider is heading to the store. */
+  pickupCode?: string;
 }
 
 interface Customer {
@@ -102,6 +104,11 @@ function groupOptions(options: OrderOption[]) {
     else groups.push({ name: o.groupName, items: [o] });
   }
   return groups;
+}
+
+// "482913" shows as "482 913", easier to read out and compare.
+function formatPickupCode(code: string): string {
+  return code.length === 6 ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
 }
 
 export default function OrderDetailPage() {
@@ -213,6 +220,9 @@ export default function OrderDetailPage() {
   const showRider = !!rider && !cancelled && order.stage !== "delivered";
   const showCustomer = !!customer && !cancelled && order.stage !== "delivered";
   const hasDiscount = (order.discount ?? 0) > 0;
+  // The code only matters while the rider is on the way to collect the order.
+  const pickupCode =
+    rider?.pickupCode && (order.stage === "preparing" || order.stage === "ready") ? rider.pickupCode : "";
 
   return (
     <div className="max-w-lg space-y-5">
@@ -280,6 +290,19 @@ export default function OrderDetailPage() {
             </a>
           )}
         </Card>
+      )}
+
+      {pickupCode && (
+        <div className="rounded-2xl border-2 border-brand bg-brand-light p-4 text-center shadow-card">
+          <p className="text-sm font-bold text-ink">Pickup code</p>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            Ask the rider for their code. It must match this one before you hand over the order.
+          </p>
+          <p className="mt-3 text-4xl font-extrabold tracking-[0.2em] text-ink">{formatPickupCode(pickupCode)}</p>
+          <p className="mt-3 text-xs font-semibold text-status-danger">
+            If the code does not match, do not give out the order.
+          </p>
+        </div>
       )}
 
       {cancelled ? (
