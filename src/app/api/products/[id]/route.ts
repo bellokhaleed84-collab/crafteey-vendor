@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import HubProduct, { type IHubProduct } from "@/models/HubProduct";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { getLinkedHubVendor } from "@/lib/hubVendor";
-import { toVendorProduct, nairaToKobo, parseSection } from "@/lib/hubProductMapper";
+import { toVendorProduct, nairaToKobo, parseSection, parseStock } from "@/lib/hubProductMapper";
 import { parseOptionGroups } from "@/lib/optionGroups";
 
 async function authorize(req: NextRequest, id: string) {
@@ -42,8 +42,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if ("section" in updates) {
       const s = parseSection(updates.section);
       if (!s.ok) return NextResponse.json({ error: s.error }, { status: 400 });
-      if (s.value) set.section = s.value;
-      else unset.section = "";
+      // The client app reads menuSection. The old "section" field is cleared so it can't linger.
+      if (s.value) set.menuSection = s.value;
+      else unset.menuSection = "";
+      unset.section = "";
     }
     if ("variants" in updates && Array.isArray(updates.variants)) set.variants = updates.variants;
     if ("optionGroups" in updates) {
@@ -51,7 +53,30 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       if (!groups.ok) return NextResponse.json({ error: groups.error }, { status: 400 });
       set.optionGroups = groups.value;
     }
-    if ("inStock" in updates) set.isAvailable = Boolean(updates.inStock);
+    if ("inStock" in updates) {
+      const want = Boolean(updates.inStock);
+      if (want && !("stock" in updates)) {
+        // An item with 0 left can't be switched back on until the vendor says how many they have.
+        const cur = await HubProduct.findOne({ _id: params.id, vendorId: vendor._id, isActive: true })
+          .select("stock")
+          .lean<{ stock?: number | null } | null>();
+        if (cur && cur.stock === 0) {
+          return NextResponse.json(
+            { error: "This item has 0 left. Set how many you have first." },
+            { status: 400 }
+          );
+        }
+      }
+      set.isAvailable = want;
+    }
+    if ("stock" in updates) {
+      const st = parseStock(updates.stock);
+      if (!st.ok) return NextResponse.json({ error: st.error }, { status: 400 });
+      set.stock = st.value;
+      if (st.value === 0) set.isAvailable = false;
+      // Restocking puts the item back on sale (unless this same request marks it out).
+      else if (st.value !== null && updates.inStock !== false) set.isAvailable = true;
+    }
     if ("price" in updates) {
       const kobo = nairaToKobo(updates.price);
       if (kobo === null) return NextResponse.json({ error: "Enter a valid price" }, { status: 400 });

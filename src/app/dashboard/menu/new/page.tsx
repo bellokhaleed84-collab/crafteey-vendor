@@ -23,6 +23,7 @@ export default function AddProductPage() {
     description: "",
     section: "",
     price: "",
+    stock: "",
     imageUrl: "",
   });
   const [groups, setGroups] = useState<GroupDraft[]>([]);
@@ -64,6 +65,11 @@ export default function AddProductPage() {
     if (form.section.trim().length > 40) {
       return setError("Menu section must be 40 characters or fewer.");
     }
+    const stockText = form.stock.trim();
+    const stock = stockText === "" ? null : Number(stockText);
+    if (stock !== null && (!Number.isInteger(stock) || stock < 0)) {
+      return setError("How many you have must be a whole number, like 20. Leave it empty for no limit.");
+    }
     const problem = validateDrafts(groups);
     if (problem) return setError(problem);
 
@@ -77,6 +83,7 @@ export default function AddProductPage() {
           description: form.description.trim(),
           section: form.section.trim() || undefined,
           price,
+          stock,
           imageUrl: form.imageUrl || undefined,
           optionGroups: toPayload(groups),
         }),
@@ -147,6 +154,21 @@ export default function AddProductPage() {
         <p className="mt-1 text-xs text-ink-faint">
           This is the price with the normal serving. Extras and bigger portions are added below and are
           charged on top of it.
+        </p>
+      </Field>
+
+      <Field label="How many do you have?">
+        <input
+          type="number"
+          inputMode="numeric"
+          min="0"
+          placeholder="Leave empty for no limit"
+          className={INPUT}
+          value={form.stock}
+          onChange={(e) => update("stock", e.target.value)}
+        />
+        <p className="mt-1 text-xs text-ink-faint">
+          Optional. It goes down by itself on every paid order, and the item shows as sold out at 0.
         </p>
       </Field>
 

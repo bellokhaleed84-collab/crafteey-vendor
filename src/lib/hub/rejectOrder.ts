@@ -1,5 +1,6 @@
 import mongoose, { type Types } from "mongoose";
 import HubOrder from "@/models/HubOrder";
+import HubProduct from "@/models/HubProduct";
 import CourierRequest from "@/models/CourierRequest";
 import { creditInSession } from "@/lib/wallet";
 
@@ -83,6 +84,24 @@ export async function rejectOrder(input: {
         note: `Refund for cancelled order ${order.orderNumber}`,
       });
 
+      // Give back the stock that was taken when the order was paid.
+      // Only the amounts saved on the order are returned, and an item that sold out
+      // because it hit zero goes back on sale. Deleted items are left alone.
+      for (const d of updated.stockDeducted ?? []) {
+        await HubProduct.updateOne(
+          { _id: d.productId, isActive: true, stock: { $type: "number" } },
+          [
+            {
+              $set: {
+                stock: { $add: ["$stock", d.quantity] },
+                isAvailable: { $cond: [{ $lte: ["$stock", 0] }, true, "$isAvailable"] },
+              },
+            },
+          ],
+          { session }
+        );
+      }
+
       await HubOrder.updateOne(
         { _id: order._id },
         {
@@ -93,6 +112,7 @@ export async function rejectOrder(input: {
               amountKobo: order.totalKobo,
               refundedAt: new Date(),
             },
+            stockDeducted: [],
           },
         },
         { session }

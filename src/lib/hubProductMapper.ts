@@ -11,9 +11,12 @@ export function toVendorProduct(p: ProductDoc) {
     description: p.description ?? "",
     imageUrl: p.imageUrl ?? "",
     category: p.category,
-    section: p.section ?? "",
+    // menuSection is what the client app reads. "section" is the old name.
+    section: p.menuSection ?? p.section ?? "",
     price: p.priceKobo / 100,
     inStock: p.isAvailable,
+    // null = no limit
+    stock: typeof p.stock === "number" ? p.stock : null,
     variants: p.variants ?? [],
     optionGroups: (p.optionGroups ?? []).map((g) => ({
       id: g.id,
@@ -54,4 +57,15 @@ export function parseSection(
     return { ok: false, error: `Menu section must be ${MAX_SECTION_LENGTH} characters or fewer.` };
   }
   return { ok: true, value };
+}
+
+// How many the vendor has. Empty/null means "no limit". 0 means sold out.
+export function parseStock(
+  input: unknown
+): { ok: true; value: number | null } | { ok: false; error: string } {
+  if (input === undefined || input === null || input === "") return { ok: true, value: null };
+  if (typeof input !== "number" || !Number.isInteger(input) || input < 0 || input > 100000) {
+    return { ok: false, error: "Quantity must be a whole number from 0 to 100,000." };
+  }
+  return { ok: true, value: input };
 }

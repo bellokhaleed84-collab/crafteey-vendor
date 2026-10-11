@@ -49,6 +49,8 @@ export interface IHubOrder {
   status: HubOrderStatus;
   payment: { reference?: string; status: "pending" | "success" | "failed"; paidAt?: Date; channel?: string };
   delivery: { address: string; phone?: string; note?: string };
+  /** Stock taken off when this order was paid (written by the client app). Given back on reject. */
+  stockDeducted?: { productId: Types.ObjectId; quantity: number }[];
   vendorAcceptedAt?: Date;
   readyForPickupAt?: Date;
   cancelledBy?: "vendor";
@@ -113,6 +115,13 @@ const HubOrderSchema = new Schema<IHubOrder>(
       phone: String,
       note: String,
     },
+    stockDeducted: [
+      {
+        _id: false,
+        productId: { type: Schema.Types.ObjectId, ref: "HubProduct", required: true },
+        quantity: { type: Number, required: true, min: 1 },
+      },
+    ],
     vendorAcceptedAt: Date,
     readyForPickupAt: Date,
     cancelledBy: { type: String, enum: ["vendor"] },

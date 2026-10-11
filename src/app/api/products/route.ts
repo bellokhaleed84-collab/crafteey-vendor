@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import HubProduct from "@/models/HubProduct";
 import { verifyToken, AuthError } from "@/middleware/auth";
 import { getLinkedHubVendor } from "@/lib/hubVendor";
-import { toVendorProduct, nairaToKobo, parseSection } from "@/lib/hubProductMapper";
+import { toVendorProduct, nairaToKobo, parseSection, parseStock } from "@/lib/hubProductMapper";
 import { parseOptionGroups } from "@/lib/optionGroups";
 
 export async function GET(req: NextRequest) {
@@ -12,6 +12,21 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
     const vendor = await getLinkedHubVendor(decoded.uid);
     if (!vendor) return NextResponse.json({ products: [] });
+
+    // Foods saved before the fix used the field "section", which the client app never read.
+    // Copy it to "menuSection" (adds a field, deletes nothing). Does nothing once done.
+    try {
+      await HubProduct.updateMany(
+        {
+          vendorId: vendor._id,
+          section: { $exists: true, $nin: ["", null] },
+          menuSection: { $exists: false },
+        },
+        [{ $set: { menuSection: "$section" } }]
+      );
+    } catch (e) {
+      console.error("menuSection copy failed", e);
+    }
 
     const docs = await HubProduct.find({ vendorId: vendor._id, isActive: true })
       .sort({ createdAt: -1 })
@@ -53,6 +68,9 @@ export async function POST(req: NextRequest) {
     const section = parseSection(body.section);
     if (!section.ok) return NextResponse.json({ error: section.error }, { status: 400 });
 
+    const stock = parseStock(body.stock);
+    if (!stock.ok) return NextResponse.json({ error: stock.error }, { status: 400 });
+
     const groups = parseOptionGroups(body.optionGroups);
     if (!groups.ok) return NextResponse.json({ error: groups.error }, { status: 400 });
 
@@ -60,14 +78,16 @@ export async function POST(req: NextRequest) {
       vendorId: vendor._id,
       // The Hub category always follows the store's own category.
       category: vendor.categories[0] ?? "food",
-      section: section.value || undefined,
+      menuSection: section.value || undefined,
       name,
       description: body.description || undefined,
       imageUrl: body.imageUrl || undefined,
       priceKobo,
+      stock: stock.value,
       variants: Array.isArray(body.variants) ? body.variants : [],
       optionGroups: groups.value,
-      isAvailable: body.inStock !== false,
+      // A quantity of 0 means sold out from the start.
+      isAvailable: body.inStock !== false && stock.value !== 0,
       isActive: true,
       isSeed: false,
     });

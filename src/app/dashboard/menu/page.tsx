@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, ChevronRight, Search, Package, MoreVertical, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, Package, MoreVertical, Pencil, Trash2, Eye, EyeOff, Hash } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -16,6 +16,8 @@ interface Product {
   imageUrl?: string;
   category: string;
   inStock: boolean;
+  /** null = no limit */
+  stock?: number | null;
 }
 
 type FilterKey = "all" | "available" | "out";
@@ -30,6 +32,9 @@ export default function MenuPage() {
   const [query, setQuery] = useState("");
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [stockFor, setStockFor] = useState<Product | null>(null);
+  const [stockInput, setStockInput] = useState("");
+  const [stockError, setStockError] = useState<string | null>(null);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -59,9 +64,45 @@ export default function MenuPage() {
       });
       if (!res.ok) throw new Error(await readError(res, "Couldn't update stock."));
       await loadProducts();
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't update stock.");
     }
+  };
+
+  const openQuantity = (p: Product) => {
+    setMenuFor(null);
+    setStockError(null);
+    setStockInput(typeof p.stock === "number" ? String(p.stock) : "");
+    setStockFor(p);
+  };
+
+  const saveQuantity = async (value: number | null) => {
+    if (!stockFor) return;
+    setBusyId(stockFor._id);
+    try {
+      const res = await apiFetch(getToken, `/api/products/${stockFor._id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ stock: value }),
+      });
+      if (!res.ok) throw new Error(await readError(res, "Couldn't save the quantity."));
+      setStockFor(null);
+      await loadProducts();
+    } catch (err) {
+      setStockError(err instanceof Error ? err.message : "Couldn't save the quantity.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const submitQuantity = () => {
+    const raw = stockInput.trim();
+    const n = Number(raw);
+    if (raw === "" || !Number.isInteger(n) || n < 0) {
+      setStockError("Enter a whole number, like 20. Use \"No limit\" if you don't count it.");
+      return;
+    }
+    saveQuantity(n);
   };
 
   const deleteProduct = async (p: Product) => {
@@ -159,7 +200,7 @@ export default function MenuPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold text-ink">{p.name}</p>
                 <p className="truncate text-xs text-ink-faint">{p.category}</p>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                   <p className="text-sm font-bold text-ink">
                     {"\u20A6"}
                     {p.price.toLocaleString()}
@@ -175,6 +216,9 @@ export default function MenuPage() {
                     <span className="h-1.5 w-1.5 rounded-full bg-current" />
                     {p.inStock ? "In Stock" : "Out of Stock"}
                   </button>
+                  {typeof p.stock === "number" && (
+                    <span className="text-[11px] font-semibold text-ink-muted">{p.stock} left</span>
+                  )}
                 </div>
               </div>
               <button
@@ -208,6 +252,12 @@ export default function MenuPage() {
                       <Pencil size={16} /> Edit
                     </button>
                     <button
+                      onClick={() => openQuantity(p)}
+                      className="flex w-full items-center gap-3 border-t border-surface-border px-4 py-3.5 text-left text-sm font-semibold text-ink"
+                    >
+                      <Hash size={16} /> Set quantity
+                    </button>
+                    <button
                       onClick={() => toggleStock(p)}
                       className="flex w-full items-center gap-3 border-t border-surface-border px-4 py-3.5 text-left text-sm font-semibold text-ink"
                     >
@@ -223,7 +273,6 @@ export default function MenuPage() {
                   </div>
                 </>
               )}
-              {menuFor !== p._id && <ChevronRight size={0} className="hidden" />}
             </Card>
           ))}
         </div>
@@ -236,6 +285,56 @@ export default function MenuPage() {
       >
         <Plus size={26} />
       </button>
+
+      {stockFor && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-5"
+          onClick={() => setStockFor(null)}
+        >
+          <div
+            className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <p className="text-base font-bold text-ink">How many do you have?</p>
+              <p className="mt-0.5 text-xs text-ink-muted">{stockFor.name}</p>
+            </div>
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              autoFocus
+              placeholder="e.g. 20"
+              value={stockInput}
+              onChange={(e) => setStockInput(e.target.value)}
+              className="w-full rounded-xl border border-surface-border bg-white px-4 py-3.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-brand"
+            />
+            <p className="text-xs text-ink-faint">
+              It goes down by itself on every paid order and the item shows as sold out at 0. If you reject
+              an order, the quantity goes back.
+            </p>
+            {stockError && (
+              <p className="rounded-xl bg-status-danger-bg p-3 text-sm text-status-danger">{stockError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={submitQuantity}
+                disabled={busyId === stockFor._id}
+                className="flex-1 rounded-xl bg-brand py-3.5 text-sm font-bold text-brand-ink disabled:opacity-60"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => saveQuantity(null)}
+                disabled={busyId === stockFor._id}
+                className="rounded-xl border border-surface-border px-4 text-sm font-semibold text-ink disabled:opacity-60"
+              >
+                No limit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

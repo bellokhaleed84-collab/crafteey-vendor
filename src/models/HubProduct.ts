@@ -6,13 +6,17 @@ import type { StoredGroup } from "@/lib/optionGroups";
 export interface IHubProduct {
   vendorId: Types.ObjectId;
   category: HubCategory;
-  section?: string; // menu section shown on the store page, e.g. "Rice Dishes"
+  /** menu section on the store page. The client app reads this field. */
+  menuSection?: string;
+  /** old name for the same thing. Only read, never written any more. */
+  section?: string;
   name: string;
   description?: string;
   imageUrl?: string;
   emoji?: string;
   priceKobo: number;
   unit?: string;
+  /** null/undefined = no limit */
   stock?: number | null;
   variants?: unknown[];
   optionGroups?: StoredGroup[];
@@ -47,6 +51,7 @@ const HubProductSchema = new Schema<IHubProduct>(
   {
     vendorId: { type: Schema.Types.ObjectId, ref: "HubVendor", required: true, index: true },
     category: { type: String, enum: HUB_CATEGORIES, required: true, index: true },
+    menuSection: { type: String, trim: true, maxlength: 40 },
     section: { type: String, trim: true, maxlength: 40 },
     name: { type: String, required: true, trim: true },
     description: String,

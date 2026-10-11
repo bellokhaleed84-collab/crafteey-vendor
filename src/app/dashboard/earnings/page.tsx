@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Settings2 } from "lucide-react";
+import { BarChart3, ChevronRight, Settings2, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -260,6 +260,27 @@ export default function EarningsPage() {
             {totals.weekCount} order{totals.weekCount === 1 ? "" : "s"}
           </p>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/dashboard/analytics">
+          <Card className="flex h-full flex-col gap-2 p-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+              <BarChart3 size={18} />
+            </span>
+            <p className="font-semibold text-ink">Analytics</p>
+            <p className="text-xs text-ink-muted">Top items and promotions</p>
+          </Card>
+        </Link>
+        <Link href="/dashboard/customers">
+          <Card className="flex h-full flex-col gap-2 p-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+              <Users size={18} />
+            </span>
+            <p className="font-semibold text-ink">Customers</p>
+            <p className="text-xs text-ink-muted">Who orders from you</p>
+          </Card>
+        </Link>
       </div>
 
       <Link href="/dashboard/earnings/payout-settings">
