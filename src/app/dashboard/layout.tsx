@@ -13,7 +13,12 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Home", icon: Home, match: ["/dashboard"], exact: true },
   { href: "/dashboard/orders", label: "Orders", icon: ClipboardList, match: ["/dashboard/orders"] },
   { href: "/dashboard/menu", label: "Products", icon: Package, match: ["/dashboard/menu"] },
-  { href: "/dashboard/earnings", label: "Earnings", icon: Wallet, match: ["/dashboard/earnings"] },
+  {
+    href: "/dashboard/earnings",
+    label: "Earnings",
+    icon: Wallet,
+    match: ["/dashboard/earnings", "/dashboard/wallet"],
+  },
   {
     href: "/dashboard/more",
     label: "More",

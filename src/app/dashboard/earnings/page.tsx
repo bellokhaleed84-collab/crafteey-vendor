@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { ChevronRight, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch, readError } from "@/lib/apiClient";
 import { Card } from "@/components/ui/Card";
@@ -95,6 +97,19 @@ export default function EarningsPage() {
         </p>
       </Card>
 
+      <Link href="/dashboard/wallet">
+        <Card className="flex items-center gap-3 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
+            <Wallet size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ink">Wallet</p>
+            <p className="text-xs text-ink-muted">Balance, payouts and bank account</p>
+          </div>
+          <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+        </Card>
+      </Link>
+
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4">
           <p className="text-xs text-ink-muted">Completed Orders</p>
@@ -162,7 +177,6 @@ export default function EarningsPage() {
             Earnings are your item sales minus Crafteey&apos;s commission. Delivery fees go to riders and are not
             part of your earnings.
           </p>
-          <p>Wallet and withdrawals aren&apos;t built yet.</p>
         </Card>
       ) : (
         <div>
@@ -207,6 +221,7 @@ function EarningsSkeleton() {
     <div className="space-y-5">
       <Skeleton className="h-6 w-28" />
       <Skeleton className="h-28 rounded-2xl" />
+      <Skeleton className="h-16 rounded-2xl" />
       <div className="grid grid-cols-2 gap-3">
         <Skeleton className="h-20 rounded-2xl" />
         <Skeleton className="h-20 rounded-2xl" />
